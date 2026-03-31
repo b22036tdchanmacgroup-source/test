@@ -1,0 +1,3283 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BCMF — AI 공사 도우미 통합 플랫폼</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════
+   DESIGN TOKENS
+════════════════════════════════════════ */
+:root {
+  --accent:    #BD5429;
+  --accent-l:  #D4693E;
+  --accent-d:  rgba(189,84,41,.14);
+  --primary:   #496259;
+  --primary-l: #5A7870;
+  --primary-d: rgba(73,98,89,.18);
+  --bg:        #0D1117;
+  --bg2:       #111820;
+  --bg3:       #162028;
+  --surf:      #1A2530;
+  --surf2:     #1F2E3D;
+  --bdr:       rgba(73,98,89,.28);
+  --bdr-acc:   rgba(189,84,41,.25);
+  --tx:        #E8EDF2;
+  --tx-m:      #7A9BAA;
+  --tx-d:      #4A6070;
+  --green:     #3EBD7A;
+  --yellow:    #F0C040;
+  --red:       #E05050;
+  --cyan:      #4BBFCF;
+  --orange:    #E8924A;
+  --mono:      'JetBrains Mono', monospace;
+  --ui:        'Noto Sans KR', sans-serif;
+  --panel-w:        500px;
+  --panel-w-wide:   720px;
+  --panel-w-full:   960px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body {
+  font-family: var(--ui);
+  background: var(--bg);
+  color: var(--tx);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ════════════════════════════════════════
+   TOP NAV
+════════════════════════════════════════ */
+.topnav {
+  height: 48px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--bdr);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 0;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 200;
+}
+.logo {
+  display: flex; align-items: center; gap: 9px;
+  padding-right: 18px;
+  border-right: 1px solid var(--bdr);
+  margin-right: 8px;
+}
+.logo-mark {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 900; color: white;
+  clip-path: polygon(0 0,88% 0,100% 12%,100% 100%,12% 100%,0 88%);
+  flex-shrink: 0;
+}
+.logo-text .l1 { font-size:10px; color:var(--tx-d); font-weight:300; letter-spacing:1px; }
+.logo-text .l2 { font-size:13px; font-weight:700; letter-spacing:.3px; }
+.nav-items { display:flex; align-items:center; flex:1; gap:1px; }
+.nav-item {
+  padding:6px 11px; font-size:12px; color:var(--tx-m); cursor:pointer;
+  border-radius:4px; transition:all .15s; white-space:nowrap;
+}
+.nav-item:hover { color:var(--tx); background:var(--primary-d); }
+.nav-item.active { color:var(--accent-l); background:var(--accent-d); font-weight:600; }
+.nav-right { display:flex; align-items:center; gap:8px; padding-left:14px; border-left:1px solid var(--bdr); }
+
+/* AI 도우미 trigger button */
+.ai-trigger {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+  color: white; border: none; border-radius: 6px;
+  font-size: 12px; font-weight: 700; font-family: var(--ui);
+  cursor: pointer; transition: all .2s;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(189,84,41,.3);
+}
+.ai-trigger:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(189,84,41,.4); }
+.ai-trigger .notif {
+  position: absolute; top: -4px; right: -4px;
+  width: 16px; height: 16px;
+  background: var(--red); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 900;
+  border: 2px solid var(--bg2);
+  animation: popIn .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn { from{transform:scale(0)} to{transform:scale(1)} }
+
+.status-chip {
+  display:flex; align-items:center; gap:5px;
+  background:var(--surf); border:1px solid var(--bdr);
+  border-radius:4px; padding:4px 9px;
+  font-size:10px; color:var(--tx-m); font-family:var(--mono);
+}
+.dot { width:6px; height:6px; border-radius:50%; }
+.dot.g { background:var(--green); box-shadow:0 0 5px var(--green); animation:blink 2s infinite; }
+.dot.r { background:var(--red); }
+.dot.y { background:var(--yellow); }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.35} }
+
+/* ════════════════════════════════════════
+   SUB NAV
+════════════════════════════════════════ */
+.subnav {
+  height: 34px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--bdr);
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 3px;
+  flex-shrink: 0; z-index: 190;
+}
+.sub-item {
+  padding:5px 10px; font-size:11px; color:var(--tx-d);
+  cursor:pointer; border-radius:3px; transition:all .15s;
+}
+.sub-item:hover { color:var(--tx-m); background:var(--primary-d); }
+.sub-item.active { color:var(--primary-l); border-bottom:2px solid var(--primary); border-radius:0; }
+.sub-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+.date-badge {
+  font-size:11px; font-family:var(--mono); color:var(--accent);
+  background:var(--accent-d); border:1px solid var(--bdr-acc);
+  border-radius:4px; padding:3px 9px;
+}
+
+/* ════════════════════════════════════════
+   MAIN LAYOUT
+════════════════════════════════════════ */
+.workspace {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+}
+
+/* ════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════ */
+.sidebar {
+  background: var(--bg2);
+  border-right: 1px solid var(--bdr);
+  overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bdr) transparent;
+}
+.sb-section { padding:10px 0; border-bottom:1px solid var(--bdr); }
+.sb-title {
+  padding:0 13px 7px;
+  font-size:10px; text-transform:uppercase;
+  letter-spacing:1.5px; color:var(--tx-d); font-weight:700;
+}
+.sb-item {
+  padding:7px 13px; display:flex; align-items:center; gap:8px;
+  cursor:pointer; transition:all .15s;
+  color:var(--tx-m); font-size:12px;
+}
+.sb-item:hover { background:var(--primary-d); color:var(--tx); }
+.sb-item.active { background:var(--accent-d); color:var(--accent-l); border-right:2px solid var(--accent); }
+.sb-badge {
+  margin-left:auto; background:var(--accent); color:white;
+  font-size:9px; padding:1px 5px; border-radius:8px; font-weight:700;
+}
+.sb-badge.yellow { background:var(--yellow); color:#1a1a1a; }
+
+/* Progress widget in sidebar */
+.sb-progress { padding:8px 13px 12px; }
+.prog-lbl { display:flex; justify-content:space-between; font-size:10px; color:var(--tx-m); margin-bottom:4px; }
+.prog-track { height:4px; background:var(--surf); border-radius:2px; overflow:hidden; }
+.prog-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--primary),var(--accent)); transition:width 1.5s ease; }
+
+/* ════════════════════════════════════════
+   MAIN CONTENT (BIM + 일지)
+════════════════════════════════════════ */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: margin-right .4s cubic-bezier(.4,0,.2,1);
+}
+.main-content.panel-open {
+  margin-right: var(--panel-w);
+}
+
+/* Upload drop zone (when no report) */
+.upload-area {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--bg);
+  z-index: 5;
+  transition: opacity .3s;
+}
+.upload-area.hidden { opacity:0; pointer-events:none; }
+
+.drop-zone {
+  width: 500px;
+  border: 2px dashed var(--bdr);
+  border-radius: 12px;
+  padding: 40px 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg2);
+  position: relative;
+}
+.drop-zone:hover, .drop-zone.drag {
+  border-color: var(--primary);
+  background: var(--primary-d);
+  transform: scale(1.01);
+}
+.drop-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.drop-icon { font-size:42px; margin-bottom:14px; }
+.drop-title { font-size:18px; font-weight:700; margin-bottom:6px; }
+.drop-sub { font-size:12px; color:var(--tx-m); line-height:1.7; }
+.drop-hint { font-size:11px; color:var(--tx-d); margin-top:10px; }
+.drop-formats {
+  display: flex; gap:8px; justify-content:center; margin-top:14px;
+}
+.fmt-tag {
+  font-size:10px; font-family:var(--mono);
+  padding:2px 8px; border-radius:3px;
+  background:var(--surf); color:var(--primary-l);
+  border:1px solid var(--bdr);
+}
+.recent-label { font-size:12px; color:var(--tx-d); }
+.recent-list { display:flex; gap:8px; }
+.recent-chip {
+  padding:6px 12px; background:var(--surf);
+  border:1px solid var(--bdr); border-radius:5px;
+  font-size:11px; color:var(--tx-m); cursor:pointer;
+  transition:all .15s; display:flex; align-items:center; gap:6px;
+}
+.recent-chip:hover { border-color:var(--primary); color:var(--tx); }
+
+/* BIM / report viewer */
+.viewer-area {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+}
+.viewer-toolbar {
+  position: absolute; top:10px; left:10px;
+  display:flex; flex-direction:column; gap:3px; z-index:10;
+}
+.vbtn {
+  width:30px; height:30px; background:rgba(26,37,48,.9);
+  border:1px solid var(--bdr); border-radius:4px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; color:var(--tx-m); font-size:13px;
+  transition:all .15s;
+}
+.vbtn:hover { background:var(--surf); color:var(--tx); border-color:var(--primary); }
+
+/* SVG viewer */
+.bim-svg-wrap {
+  width:100%; height:100%;
+  display:flex; align-items:center; justify-content:center;
+  position:relative;
+  background:
+    radial-gradient(ellipse at 30% 50%,rgba(73,98,89,.07) 0%,transparent 60%),
+    radial-gradient(ellipse at 70% 30%,rgba(189,84,41,.04) 0%,transparent 50%),
+    linear-gradient(180deg,#0A1018 0%,#0D1520 100%);
+}
+.bim-svg-wrap::before {
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(73,98,89,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(73,98,89,.07) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+.scan-line {
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(75,191,207,.25),transparent);
+  animation:scan 5s linear infinite;pointer-events:none;
+}
+@keyframes scan { from{top:0%}to{top:100%} }
+
+.report-preview {
+  position: absolute; inset:0;
+  background: var(--bg2);
+  overflow-y: auto;
+  padding: 24px 32px;
+  display: none;
+}
+.report-preview.show { display:block; }
+.report-header-bar {
+  display:flex; align-items:center; gap:12px; margin-bottom:20px;
+  padding-bottom:14px; border-bottom:1px solid var(--bdr);
+}
+.report-title-h { font-size:18px; font-weight:700; }
+.report-meta { font-size:11px; color:var(--tx-m); }
+.report-section-h { font-size:13px; font-weight:700; color:var(--primary-l); margin:16px 0 10px; display:flex; align-items:center; gap:8px; }
+.report-section-h::after { content:''; flex:1; height:1px; background:var(--bdr); }
+.report-table { width:100%; border-collapse:collapse; font-size:12px; }
+.report-table th { background:var(--surf); color:var(--tx-m); font-weight:600; padding:7px 12px; border:1px solid var(--bdr); text-align:left; font-size:11px; }
+.report-table td { padding:7px 12px; border:1px solid var(--bdr); color:var(--tx-m); vertical-align:top; }
+.report-table tr:hover td { background:rgba(73,98,89,.07); }
+.report-highlight { color:var(--accent-l); font-weight:600; }
+.report-ok { color:var(--green); }
+.report-warn { color:var(--yellow); }
+
+/* Bottom status bar */
+.status-bar {
+  height:28px; background:rgba(13,17,23,.95);
+  border-top:1px solid var(--bdr);
+  display:flex; align-items:center; padding:0 12px;
+  gap:16px; font-size:10px; font-family:var(--mono);
+  color:var(--tx-d); flex-shrink:0;
+}
+.sbar-sep { width:1px; height:10px; background:var(--bdr); }
+
+/* ════════════════════════════════════════
+   AI PANEL — RIGHT SLIDE
+════════════════════════════════════════ */
+.ai-panel {
+  position: fixed;
+  top: 82px;
+  right: 0;
+  bottom: 28px;
+  width: var(--panel-w);
+  background: var(--bg2);
+  border-left: 1px solid var(--bdr);
+  display: flex;
+  flex-direction: column;
+  z-index: 150;
+  transform: translateX(100%);
+  transition: transform .4s cubic-bezier(.4,0,.2,1), width .35s cubic-bezier(.4,0,.2,1);
+  box-shadow: -8px 0 32px rgba(0,0,0,.5);
+}
+.ai-panel.open { transform: translateX(0); }
+.ai-panel.wide { width: var(--panel-w-wide); }
+.ai-panel.fullscreen { width: var(--panel-w-full); }
+.main-content.panel-wide     { margin-right: var(--panel-w-wide) !important; }
+.main-content.panel-fullscreen { margin-right: var(--panel-w-full) !important; }
+
+/* expand button */
+.panel-expand-btn {
+  background: var(--surf); border: 1px solid var(--bdr);
+  border-radius: 4px; padding: 4px 7px;
+  color: var(--tx-d); font-size: 13px; cursor: pointer;
+  transition: all .15s; line-height: 1; flex-shrink: 0;
+  display: flex; align-items: center; gap: 4px;
+}
+.panel-expand-btn:hover { background: var(--primary-d); color: var(--primary-l); border-color: var(--primary); }
+.panel-expand-btn.active { background: var(--primary-d); color: var(--primary-l); border-color: var(--primary); }
+
+/* Panel header */
+.panel-hd {
+  padding: 14px 16px 12px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--bdr);
+  flex-shrink: 0;
+}
+.panel-hd-top {
+  display:flex; align-items:center; gap:10px; margin-bottom:10px;
+}
+.panel-close {
+  background: none; border: none; cursor: pointer;
+  color: var(--tx-d); font-size: 18px;
+  transition: color .15s; padding:0; line-height:1;
+  margin-left: auto;
+}
+.panel-close:hover { color: var(--tx); }
+.ai-logo {
+  display:flex; align-items:center; gap:7px;
+}
+.ai-icon-box {
+  width:28px; height:28px;
+  background: linear-gradient(135deg, var(--accent), var(--primary));
+  border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; flex-shrink:0;
+}
+.ai-name { font-size:13px; font-weight:700; }
+.ai-sub  { font-size:10px; color:var(--tx-d); font-weight:300; }
+
+/* Analysis trigger in panel */
+.analyze-btn {
+  width:100%;
+  padding: 10px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+  color: white; border: none; border-radius: 7px;
+  font-size: 13px; font-weight: 700; font-family: var(--ui);
+  cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 3px 10px rgba(189,84,41,.25);
+}
+.analyze-btn:hover { opacity:.9; transform:translateY(-1px); box-shadow:0 5px 16px rgba(189,84,41,.35); }
+.analyze-btn:disabled { background:var(--surf2); color:var(--tx-d); cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-spinner {
+  width:14px; height:14px;
+  border:2px solid rgba(255,255,255,.3);
+  border-top-color:white; border-radius:50%;
+  animation:spin .7s linear infinite; display:none;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+.analyze-btn.loading .btn-spinner { display:block; }
+.analyze-btn.loading .btn-txt { display:none; }
+
+/* Weather strip */
+.weather-strip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: var(--surf);
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 11px;
+}
+.wx-icon { font-size: 22px; }
+.wx-info { flex:1; }
+.wx-temp { font-size:16px; font-family:var(--mono); font-weight:600; }
+.wx-desc { font-size:10px; color:var(--tx-m); margin-top:1px; }
+.wx-warn {
+  font-size:10px; font-weight:700;
+  padding:3px 8px; border-radius:4px;
+  background:rgba(240,192,64,.15); color:var(--yellow);
+  border:1px solid rgba(240,192,64,.25);
+}
+.wx-ok {
+  font-size:10px; font-weight:700;
+  padding:3px 8px; border-radius:4px;
+  background:rgba(62,189,122,.15); color:var(--green);
+  border:1px solid rgba(62,189,122,.25);
+}
+.wx-bad {
+  font-size:10px; font-weight:700;
+  padding:3px 8px; border-radius:4px;
+  background:rgba(224,80,80,.15); color:var(--red);
+  border:1px solid rgba(224,80,80,.25);
+}
+.wx-loading { color:var(--tx-d); font-size:11px; padding:8px; text-align:center; width:100%; }
+
+/* Tabs inside panel */
+.panel-tabs {
+  display:flex;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--bdr);
+  flex-shrink: 0;
+}
+.ptab {
+  flex:1; padding:8px 6px; font-size:11px; font-weight:500;
+  color:var(--tx-d); cursor:pointer; text-align:center;
+  border-bottom:2px solid transparent; transition:all .15s;
+  user-select:none; position:relative;
+}
+.ptab:hover { color:var(--tx-m); }
+.ptab.on { color:var(--tx); border-bottom-color:var(--accent); }
+.ptab-badge {
+  position:absolute; top:4px; right:4px;
+  width:14px; height:14px; border-radius:50%;
+  background:var(--red); color:white;
+  font-size:8px; font-weight:900;
+  display:none; align-items:center; justify-content:center;
+}
+.ptab-badge.on { display:flex; }
+
+/* Panel body */
+.panel-body {
+  flex:1; overflow-y:auto;
+  scrollbar-width:thin; scrollbar-color:var(--bdr) transparent;
+}
+.ppane { display:none; padding:12px; }
+.ppane.on { display:block; }
+
+/* Result cards */
+.rc {
+  border-radius:7px; padding:12px 13px;
+  border:1px solid var(--bdr); background:var(--bg3);
+  margin-bottom:9px;
+  animation:cardIn .3s ease;
+}
+@keyframes cardIn { from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)} }
+.rc.danger  { border-left:3px solid var(--red); }
+.rc.warning { border-left:3px solid var(--yellow); }
+.rc.info    { border-left:3px solid var(--cyan); }
+.rc.success { border-left:3px solid var(--green); }
+.rc.ai      { border-left:3px solid var(--accent); }
+
+.rc-head { display:flex;align-items:flex-start;gap:7px;margin-bottom:6px; }
+.sev-tag {
+  font-size:9px; font-weight:800; padding:2px 6px; border-radius:3px;
+  white-space:nowrap; margin-top:1px; flex-shrink:0;
+}
+.sev-tag.h  { background:rgba(224,80,80,.18); color:var(--red); }
+.sev-tag.m  { background:rgba(240,192,64,.18); color:var(--yellow); }
+.sev-tag.l  { background:rgba(75,191,207,.18); color:var(--cyan); }
+.sev-tag.ok { background:rgba(62,189,122,.18); color:var(--green); }
+.sev-tag.ai { background:rgba(189,84,41,.18); color:var(--accent-l); }
+
+.rc-title { font-size:12px; font-weight:700; color:var(--tx); line-height:1.4; }
+.rc-body  { font-size:11px; color:var(--tx-m); line-height:1.68; }
+.rc-action { margin-top:6px; font-size:10.5px; color:var(--yellow); }
+.rc-ref   { margin-top:7px; padding-top:6px; border-top:1px solid rgba(73,98,89,.13); display:flex; gap:5px; flex-wrap:wrap; }
+.rtag { font-size:9px; font-family:var(--mono); padding:1px 6px; border-radius:2px; background:var(--primary-d); color:var(--primary-l); }
+
+.sec-hd {
+  font-size:10px; font-weight:800; text-transform:uppercase;
+  letter-spacing:1.2px; color:var(--tx-d);
+  margin:14px 0 7px; display:flex; align-items:center; gap:7px;
+}
+.sec-hd::after { content:''; flex:1; height:1px; background:var(--bdr); }
+
+/* Summary stats */
+.stat-row { display:flex; gap:7px; margin-bottom:10px; }
+.stat-box {
+  flex:1; background:var(--surf); border:1px solid var(--bdr);
+  border-radius:6px; padding:7px 9px; text-align:center;
+}
+.sv { font-size:20px; font-family:var(--mono); font-weight:600; }
+.sv.r { color:var(--red); }
+.sv.y { color:var(--yellow); }
+.sv.g { color:var(--green); }
+.sl { font-size:9px; color:var(--tx-d); margin-top:1px; }
+
+/* State placeholder */
+.state-ph {
+  padding:32px 16px; text-align:center; color:var(--tx-d);
+}
+.state-ph-icon { font-size:30px; margin-bottom:10px; }
+.state-ph-txt { font-size:12px; line-height:1.7; }
+.state-ph-txt strong { color:var(--tx-m); display:block; margin-bottom:4px; }
+
+/* Loading bar */
+.lbar { height:3px; background:var(--surf); border-radius:2px; overflow:hidden; margin:8px 0; }
+.lfill { height:100%; background:linear-gradient(90deg,var(--primary),var(--accent),var(--primary)); background-size:200% 100%; animation:shimmer 1.5s linear infinite; }
+@keyframes shimmer { 0%{background-position:200%}100%{background-position:-200%} }
+
+/* Guide items */
+.guide-row { display:flex; gap:9px; padding:9px 0; border-bottom:1px solid rgba(73,98,89,.12); }
+.guide-row:last-child { border-bottom:none; }
+.gnum { color:var(--accent); font-weight:700; font-size:13px; min-width:18px; padding-top:1px; flex-shrink:0; }
+.gtitle { font-size:12px; font-weight:700; color:var(--tx); margin-bottom:3px; }
+.gcontent { font-size:11px; color:var(--tx-m); line-height:1.6; }
+.gref { font-size:9px; color:var(--tx-d); font-family:var(--mono); margin-top:3px; }
+
+/* Tomorrow plan card */
+.tomorrow-card {
+  background:var(--bg3);
+  border:1px solid var(--bdr);
+  border-radius:7px;
+  overflow:hidden;
+  margin-bottom:9px;
+}
+.tc-header {
+  padding:10px 12px;
+  background:rgba(73,98,89,.15);
+  border-bottom:1px solid var(--bdr);
+  display:flex; align-items:center; gap:8px;
+}
+.tc-title { font-size:12px; font-weight:700; }
+.tc-badge {
+  margin-left:auto; font-size:9px; font-weight:800;
+  padding:2px 7px; border-radius:3px;
+}
+.tc-body { padding:11px 12px; font-size:11px; color:var(--tx-m); line-height:1.7; }
+.tc-items { list-style:none; display:flex; flex-direction:column; gap:5px; margin-top:7px; }
+.tc-item { display:flex; align-items:flex-start; gap:7px; }
+.tc-dot { width:5px; height:5px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+
+/* Raw / API key area */
+.api-key-section { padding:12px; }
+.api-key-row { display:flex; align-items:center; gap:8px; background:var(--surf); border:1px solid var(--bdr); border-radius:6px; padding:7px 11px; }
+.api-key-row label { font-size:10px; color:var(--tx-d); white-space:nowrap; }
+.api-key-row input { background:transparent; border:none; outline:none; color:var(--tx-m); font-family:var(--mono); font-size:11px; flex:1; }
+.api-key-row button { background:none; border:none; cursor:pointer; color:var(--tx-d); font-size:12px; transition:color .15s; }
+.api-key-row button:hover { color:var(--tx); }
+.mode-tag { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; padding:3px 8px; border-radius:4px; margin-left:6px; }
+.mode-tag.demo { background:rgba(240,192,64,.15); color:var(--yellow); border:1px solid rgba(240,192,64,.25); }
+.mode-tag.live { background:rgba(62,189,122,.15); color:var(--green); border:1px solid rgba(62,189,122,.25); }
+
+/* Scrollbars */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--bdr); border-radius:2px; }
+::-webkit-scrollbar-thumb:hover { background:var(--primary); }
+
+/* error */
+.err-box { background:rgba(224,80,80,.08); border:1px solid rgba(224,80,80,.3); border-radius:6px; padding:12px 14px; font-size:11px; color:#FF9090; line-height:1.65; }
+
+/* Overlay backdrop (mobile/narrow) */
+.panel-backdrop {
+  display:none;
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.4);
+  z-index:140;
+}
+
+/* ════════════════════════════════════════
+   검측 체크리스트 스타일
+════════════════════════════════════════ */
+.cl-toolbar {
+  display:flex; align-items:center; gap:7px;
+  margin-bottom:10px; flex-wrap:wrap;
+}
+.cl-filter-btn {
+  padding:4px 10px; font-size:10px; font-weight:600;
+  border-radius:12px; border:1px solid var(--bdr);
+  background:var(--surf); color:var(--tx-m);
+  cursor:pointer; transition:all .15s; font-family:var(--ui);
+}
+.cl-filter-btn:hover { border-color:var(--primary); color:var(--tx); }
+.cl-filter-btn.on { background:var(--primary-d); border-color:var(--primary-l); color:var(--primary-l); }
+.cl-filter-btn.red.on { background:rgba(224,80,80,.15); border-color:var(--red); color:var(--red); }
+
+.cl-group { margin-bottom:12px; }
+.cl-group-hd {
+  font-size:10px; font-weight:800; text-transform:uppercase;
+  letter-spacing:1px; color:var(--tx-d);
+  display:flex; align-items:center; gap:7px; margin-bottom:6px;
+}
+.cl-group-hd::after { content:''; flex:1; height:1px; background:var(--bdr); }
+.cl-group-hd .ghd-badge {
+  font-size:9px; font-weight:700; padding:1px 6px;
+  border-radius:8px; background:var(--surf); color:var(--tx-d);
+  margin-left:auto; flex-shrink:0;
+}
+
+.cl-item {
+  display:flex; align-items:flex-start; gap:9px;
+  padding:8px 10px; border-radius:6px;
+  border:1px solid var(--bdr); background:var(--bg3);
+  margin-bottom:5px; cursor:pointer;
+  transition:all .15s; user-select:none;
+}
+.cl-item:hover { border-color:var(--primary); background:var(--surf); }
+.cl-item.done { background:rgba(62,189,122,.06); border-color:rgba(62,189,122,.25); }
+.cl-item.skip { opacity:.5; }
+
+.cl-checkbox {
+  width:16px; height:16px; border-radius:4px;
+  border:1.5px solid var(--bdr); flex-shrink:0; margin-top:1px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; transition:all .15s;
+}
+.cl-item.done .cl-checkbox { background:var(--green); border-color:var(--green); color:white; }
+.cl-item.na .cl-checkbox { background:var(--surf2); border-color:var(--tx-d); color:var(--tx-d); }
+
+.cl-item-body { flex:1; min-width:0; }
+.cl-item-title { font-size:12px; font-weight:600; color:var(--tx); line-height:1.4; margin-bottom:2px; }
+.cl-item.done .cl-item-title { color:var(--tx-m); }
+.cl-item-ref { font-size:10px; color:var(--tx-d); font-family:var(--mono); }
+.cl-item-note { font-size:10px; color:var(--yellow); margin-top:3px; }
+
+.cl-item-actions {
+  display:flex; gap:4px; flex-shrink:0; opacity:0; transition:opacity .15s;
+}
+.cl-item:hover .cl-item-actions { opacity:1; }
+.cl-act-btn {
+  font-size:9px; padding:2px 6px; border-radius:3px;
+  border:1px solid var(--bdr); background:var(--surf2);
+  color:var(--tx-d); cursor:pointer; font-family:var(--ui);
+  transition:all .15s;
+}
+.cl-act-btn:hover { color:var(--tx); border-color:var(--primary); }
+.cl-act-btn.na-btn:hover { color:var(--tx-d); border-color:var(--tx-d); }
+
+.cl-progress-wrap { margin-bottom:12px; }
+.cl-prog-row { display:flex; justify-content:space-between; font-size:11px; color:var(--tx-m); margin-bottom:5px; }
+.cl-prog-track { height:6px; background:var(--surf); border-radius:3px; overflow:hidden; }
+.cl-prog-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--green)); border-radius:3px; transition:width .6s ease; }
+
+.cl-submit-bar {
+  padding:10px 12px; background:var(--bg3);
+  border-top:1px solid var(--bdr);
+  display:flex; gap:8px; align-items:center;
+  flex-shrink:0;
+}
+.cl-submit-btn {
+  flex:1; padding:9px; border:none; border-radius:6px;
+  font-size:12px; font-weight:700; font-family:var(--ui);
+  cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.cl-submit-btn.primary { background:var(--primary); color:white; }
+.cl-submit-btn.primary:hover { background:var(--primary-l); transform:translateY(-1px); }
+.cl-submit-btn.secondary { background:var(--surf); color:var(--tx-m); border:1px solid var(--bdr); }
+.cl-submit-btn.secondary:hover { background:var(--surf2); color:var(--tx); }
+
+/* ════════════════════════════════════════
+   민원 답변 AI 초안 스타일
+════════════════════════════════════════ */
+.complaint-form { padding:12px; display:flex; flex-direction:column; gap:10px; }
+.cf-label { font-size:10px; font-weight:700; color:var(--tx-m); text-transform:uppercase; letter-spacing:.7px; margin-bottom:4px; display:block; }
+.cf-select {
+  width:100%; padding:8px 10px;
+  background:var(--surf); border:1px solid var(--bdr);
+  border-radius:6px; color:var(--tx); font-family:var(--ui); font-size:12px;
+  outline:none; cursor:pointer; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath fill='%234A6070' d='M5 7L0 0h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center; padding-right:26px;
+  transition:border-color .15s;
+}
+.cf-select:focus { border-color:var(--primary); }
+.cf-textarea {
+  width:100%; padding:9px 11px; min-height:80px; resize:vertical;
+  background:var(--surf); border:1px solid var(--bdr);
+  border-radius:6px; color:var(--tx); font-family:var(--ui); font-size:12px;
+  outline:none; line-height:1.6; transition:border-color .15s;
+}
+.cf-textarea:focus { border-color:var(--primary); }
+.cf-textarea::placeholder { color:var(--tx-d); }
+
+.cf-row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+.complaint-type-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.ctype-chip {
+  padding:7px 10px; border-radius:5px; border:1px solid var(--bdr);
+  background:var(--surf); color:var(--tx-m); font-size:11px; font-weight:500;
+  cursor:pointer; transition:all .15s; text-align:center; user-select:none;
+}
+.ctype-chip:hover { border-color:var(--primary); color:var(--tx); }
+.ctype-chip.on { background:var(--accent-d); border-color:var(--accent); color:var(--accent-l); }
+
+.cf-gen-btn {
+  width:100%; padding:10px; border:none; border-radius:6px;
+  background:linear-gradient(135deg,var(--accent),var(--primary));
+  color:white; font-size:13px; font-weight:700; font-family:var(--ui);
+  cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  box-shadow:0 3px 10px rgba(189,84,41,.25);
+}
+.cf-gen-btn:hover { opacity:.9; transform:translateY(-1px); }
+.cf-gen-btn:disabled { background:var(--surf2); color:var(--tx-d); cursor:not-allowed; transform:none; box-shadow:none; }
+
+/* Draft output */
+.draft-area {
+  background:var(--bg3); border:1px solid var(--bdr);
+  border-radius:7px; overflow:hidden; margin-top:4px;
+}
+.draft-header {
+  padding:8px 12px; background:var(--surf);
+  border-bottom:1px solid var(--bdr);
+  display:flex; align-items:center; gap:8px;
+}
+.draft-header-title { font-size:11px; font-weight:700; flex:1; color:var(--tx); }
+.draft-copy-btn {
+  padding:4px 10px; font-size:10px; font-weight:600;
+  border:1px solid var(--bdr); border-radius:4px;
+  background:var(--surf2); color:var(--tx-m);
+  cursor:pointer; font-family:var(--ui); transition:all .15s;
+}
+.draft-copy-btn:hover { background:var(--primary-d); border-color:var(--primary); color:var(--primary-l); }
+.draft-copy-btn.copied { background:rgba(62,189,122,.15); border-color:var(--green); color:var(--green); }
+
+.draft-body {
+  padding:14px 14px; font-size:12px; color:var(--tx-m);
+  line-height:1.8; white-space:pre-wrap; font-family:var(--ui);
+  max-height:380px; overflow-y:auto;
+}
+.draft-streaming { color:var(--tx-m); }
+.draft-cursor { display:inline-block; width:2px; height:13px; background:var(--accent); vertical-align:middle; animation:blink2 .8s step-end infinite; margin-left:1px; }
+@keyframes blink2 { 0%,100%{opacity:1}50%{opacity:0} }
+
+.draft-meta {
+  padding:7px 12px; background:rgba(13,17,23,.5);
+  border-top:1px solid var(--bdr);
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+.dmeta-tag { font-size:9px; font-family:var(--mono); padding:1px 6px; border-radius:2px; background:var(--primary-d); color:var(--primary-l); }
+</style>
+</head>
+<body>
+
+<!-- ════ TOP NAV ════ -->
+<nav class="topnav">
+  <div class="logo">
+    <div class="logo-mark">BCM</div>
+    <div class="logo-text">
+      <div class="l1">대산-당진 고속도로 시공3공구</div>
+      <div class="l2">BCMF 통합관제 플랫폼</div>
+    </div>
+  </div>
+  <div class="nav-items">
+    <div class="nav-item active">일일보고</div>
+    <div class="nav-item">C·W·OBS</div>
+    <div class="nav-item">행정 및 자원</div>
+    <div class="nav-item">시공관리</div>
+    <div class="nav-item">기성 및 공정</div>
+    <div class="nav-item">안전</div>
+    <div class="nav-item">품질 및 환경</div>
+    <div class="nav-item">민원 및 보상</div>
+    <div class="nav-item">설계납품</div>
+    <div class="nav-item">노선도</div>
+  </div>
+  <div class="nav-right">
+    <div class="status-chip"><div class="dot g"></div>시스템 정상</div>
+    <button class="ai-trigger" id="aiTriggerBtn" onclick="togglePanel()">
+      <span>🤖</span> 오늘의 작업 분석
+      <div class="notif" id="notifBadge" style="display:none">!</div>
+    </button>
+  </div>
+</nav>
+
+<!-- ════ SUB NAV ════ -->
+<div class="subnav">
+  <div class="sub-item active">작업입력</div>
+  <div class="sub-item">작업보고</div>
+  <div class="sub-item">TBM</div>
+  <div class="sub-item">안전보건</div>
+  <div class="sub-item">순회점검</div>
+  <div class="sub-item">자체점검</div>
+  <div class="sub-item">환경점검</div>
+  <div class="sub-right">
+    <div class="date-badge" id="currentDateBadge">2025.03.20 (목)</div>
+  </div>
+</div>
+
+<!-- ════ WORKSPACE ════ -->
+<div class="workspace">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">공종 현황</div>
+      <div class="sb-item active">🏗 토공 <span class="sb-badge">3</span></div>
+      <div class="sb-item">💧 배수공</div>
+      <div class="sb-item">🌉 교량공</div>
+      <div class="sb-item">🛣 포장공</div>
+      <div class="sb-item">🚇 터널공 <span class="sb-badge yellow">진행</span></div>
+      <div class="sb-item">📋 부대공</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">검측 체크</div>
+      <div class="sb-item">✅ 오늘 검측 현황</div>
+      <div class="sb-item">📐 미제출 <span class="sb-badge">2</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">공정 현황</div>
+      <div class="sb-progress">
+        <div class="prog-lbl"><span>당해년도</span><span style="color:var(--green)">100%</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:100%"></div></div>
+      </div>
+      <div class="sb-progress">
+        <div class="prog-lbl"><span>전체공정</span><span style="color:var(--cyan)">1.43%</span></div>
+        <div class="prog-track"><div class="prog-fill" style="width:14.3%"></div></div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">인원/장비</div>
+      <div style="padding:6px 13px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx-m);padding:3px 0;"><span>금일 인원</span><span style="font-family:var(--mono);color:var(--tx)">15명</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx-m);padding:3px 0;"><span>누계 인원</span><span style="font-family:var(--mono);color:var(--tx)">1,899.5</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx-m);padding:3px 0;"><span>금일 장비</span><span style="font-family:var(--mono);color:var(--tx)">0대</span></div>
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">최근 분석</div>
+      <div id="recentAnalysisList" style="padding:4px 0;">
+        <div style="padding:8px 13px;font-size:11px;color:var(--tx-d);text-align:center;">분석 기록 없음</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content" id="mainContent">
+
+    <!-- UPLOAD AREA (shown when no report loaded) -->
+    <div class="upload-area" id="uploadArea">
+      <div style="text-align:center;">
+        <div style="font-size:14px;font-weight:700;color:var(--tx-m);margin-bottom:6px;">일일작업보고서를 업로드하면 AI가 자동 분석합니다</div>
+        <div style="font-size:11px;color:var(--tx-d);">PDF · TXT · DOCX 형식 지원</div>
+      </div>
+      <div class="drop-zone" id="dropZone"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleDrop(event)">
+        <input type="file" id="reportFileInput" accept=".pdf,.txt,.docx,.doc"
+          onchange="handleReportFile(this.files[0])">
+        <div class="drop-icon">📋</div>
+        <div class="drop-title">일일작업보고서 업로드</div>
+        <div class="drop-sub">
+          드래그 & 드롭 또는 클릭하여 파일 선택<br>
+          <span style="color:var(--primary-l);font-weight:600;">업로드 즉시 AI 분석이 시작됩니다</span>
+        </div>
+        <div class="drop-formats">
+          <span class="fmt-tag">PDF</span>
+          <span class="fmt-tag">TXT</span>
+          <span class="fmt-tag">DOCX</span>
+        </div>
+        <div class="drop-hint">또는 샘플 데이터로 테스트하기 ↓</div>
+      </div>
+      <div>
+        <div class="recent-label" style="text-align:center;margin-bottom:8px;">샘플 보고서로 테스트</div>
+        <div class="recent-list">
+          <div class="recent-chip" onclick="loadSample('daily')">📋 2025.03.20 일일보고</div>
+          <div class="recent-chip" onclick="loadSample('tunnel')">🚇 터널굴착 작업보고</div>
+          <div class="recent-chip" onclick="loadSample('bridge')">🌉 교량 상부공 보고</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORT PREVIEW -->
+    <div class="report-preview" id="reportPreview">
+      <!-- filled dynamically -->
+    </div>
+
+    <!-- BIM VIEWER (default) -->
+    <div class="viewer-area" id="viewerArea">
+      <div class="bim-svg-wrap">
+        <div class="scan-line"></div>
+        <div style="position:relative;">
+          <svg width="580" height="300" viewBox="0 0 580 300" style="filter:drop-shadow(0 0 16px rgba(73,98,89,.3))">
+            <defs>
+              <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                <path d="M30 0L0 0 0 30" fill="none" stroke="rgba(73,98,89,.12)" stroke-width=".5"/>
+              </pattern>
+            </defs>
+            <rect width="580" height="300" fill="url(#grid)"/>
+            <line x1="20" y1="240" x2="560" y2="240" stroke="rgba(73,98,89,.4)" stroke-width="1.5"/>
+            <rect x="100" y="150" width="22" height="90" fill="rgba(73,98,89,.12)" stroke="rgba(73,98,89,.45)" stroke-width="1"/>
+            <rect x="95" y="144" width="32" height="10" fill="rgba(75,191,207,.12)" stroke="rgba(75,191,207,.45)" stroke-width="1"/>
+            <rect x="255" y="150" width="22" height="90" fill="rgba(73,98,89,.12)" stroke="rgba(73,98,89,.45)" stroke-width="1"/>
+            <rect x="250" y="144" width="32" height="10" fill="rgba(75,191,207,.12)" stroke="rgba(75,191,207,.45)" stroke-width="1"/>
+            <rect x="405" y="150" width="22" height="90" fill="rgba(73,98,89,.12)" stroke="rgba(73,98,89,.45)" stroke-width="1"/>
+            <rect x="400" y="144" width="32" height="10" fill="rgba(75,191,207,.12)" stroke="rgba(75,191,207,.45)" stroke-width="1"/>
+            <rect x="40" y="122" width="500" height="24" fill="rgba(75,191,207,.07)" stroke="rgba(75,191,207,.45)" stroke-width="1.5"/>
+            <rect x="40" y="122" width="500" height="5" fill="rgba(75,191,207,.13)"/>
+            <!-- rebar alert -->
+            <rect x="190" y="127" width="5" height="14" fill="rgba(189,84,41,.5)" stroke="rgba(189,84,41,.8)" stroke-width="1"/>
+            <rect x="203" y="127" width="5" height="14" fill="rgba(189,84,41,.5)" stroke="rgba(189,84,41,.8)" stroke-width="1"/>
+            <rect x="216" y="127" width="5" height="14" fill="rgba(189,84,41,.5)" stroke="rgba(189,84,41,.8)" stroke-width="1"/>
+            <circle cx="203" cy="115" r="9" fill="rgba(224,80,80,.18)" stroke="rgba(224,80,80,.7)" stroke-width="1.5"/>
+            <text x="203" y="119" text-anchor="middle" fill="#E05050" font-size="9" font-family="JetBrains Mono">!</text>
+            <text x="111" y="228" text-anchor="middle" fill="rgba(75,191,207,.55)" font-size="9" font-family="JetBrains Mono">P1</text>
+            <text x="266" y="228" text-anchor="middle" fill="rgba(75,191,207,.55)" font-size="9" font-family="JetBrains Mono">P2</text>
+            <text x="416" y="228" text-anchor="middle" fill="rgba(75,191,207,.55)" font-size="9" font-family="JetBrains Mono">P3</text>
+            <line x1="40" y1="265" x2="540" y2="265" stroke="rgba(73,98,89,.3)" stroke-width=".8"/>
+            <text x="290" y="276" text-anchor="middle" fill="rgba(73,98,89,.6)" font-size="8" font-family="JetBrains Mono">STA.4+160~4+219.0 · 교량 상부공 4-C1구역</text>
+          </svg>
+          <div style="position:absolute;bottom:30px;left:10px;display:flex;flex-direction:column;gap:3px;" id="bimTags"></div>
+        </div>
+      </div>
+      <div class="viewer-toolbar">
+        <div class="vbtn">+</div>
+        <div class="vbtn">−</div>
+        <div class="vbtn">⊙</div>
+        <div class="vbtn">≡</div>
+      </div>
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar">
+      <span id="sbModel">BIM 모델: 교량 상부공 4-C1</span>
+      <div class="sbar-sep"></div>
+      <span id="sbSync">마지막 동기화: —</span>
+      <div class="sbar-sep"></div>
+      <span id="sbReport" style="color:var(--tx-d)">일일보고: 미업로드</span>
+      <div class="sbar-sep"></div>
+      <span id="sbWeather" style="color:var(--tx-d)">기상: 로딩 중...</span>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /workspace -->
+
+<!-- ════ AI PANEL (RIGHT SLIDE) ════ -->
+<div class="panel-backdrop" id="backdrop" onclick="togglePanel()"></div>
+
+<div class="ai-panel" id="aiPanel">
+
+  <!-- Panel Header -->
+  <div class="panel-hd">
+    <div class="panel-hd-top">
+      <div class="ai-logo">
+        <div class="ai-icon-box">🤖</div>
+        <div>
+          <div class="ai-name">AI 공사 도우미</div>
+          <div class="ai-sub">BCMF 통합 분석 엔진</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;margin-left:auto;">
+        <button class="panel-expand-btn" id="expandBtn" onclick="cycleExpand()" title="패널 크기 조절">
+          <span id="expandIcon">⇥</span>
+        </button>
+        <button class="panel-close" onclick="togglePanel()">✕</button>
+      </div>
+    </div>
+
+    <!-- API Key (compact) -->
+    <div class="api-key-row" style="margin-bottom:8px;">
+      <label>API</label>
+      <input type="password" id="panelApiKey" placeholder="sk-ant-... (LIVE 모드)" oninput="checkApiMode()">
+      <button onclick="toggleApiVis()">👁</button>
+      <span class="mode-tag demo" id="modeTag">DEMO</span>
+    </div>
+
+    <!-- Weather strip -->
+    <div id="weatherStrip">
+      <div class="wx-loading">🌡 기상 데이터 로딩 중...</div>
+    </div>
+
+    <!-- Analyze button -->
+    <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()" style="margin-top:8px;" disabled>
+      <div class="btn-spinner" id="btnSpin"></div>
+      <span class="btn-txt" id="btnTxt">⬆ 작업일지 업로드 후 분석 가능</span>
+    </button>
+  </div>
+
+  <!-- Panel Tabs — 6개 탭 -->
+  <div class="panel-tabs" style="overflow-x:auto; scrollbar-width:none;">
+    <div class="ptab on" onclick="switchPTab('today')" id="pt-today" style="font-size:10px; padding:8px 9px;">
+      ⚡ 오늘분석
+      <div class="ptab-badge" id="pb-today"></div>
+    </div>
+    <div class="ptab" onclick="switchPTab('tomorrow')" id="pt-tomorrow" style="font-size:10px; padding:8px 9px;">
+      🌤 내일계획
+      <div class="ptab-badge" id="pb-tomorrow"></div>
+    </div>
+    <div class="ptab" onclick="switchPTab('checklist')" id="pt-checklist" style="font-size:10px; padding:8px 9px;">
+      ✅ 검측
+      <div class="ptab-badge" id="pb-checklist"></div>
+    </div>
+    <div class="ptab" onclick="switchPTab('complaint')" id="pt-complaint" style="font-size:10px; padding:8px 9px;">
+      📢 민원답변
+    </div>
+    <div class="ptab" onclick="switchPTab('accident')" id="pt-accident" style="font-size:10px; padding:8px 9px; position:relative;">
+      🚨 사고대응
+      <div class="ptab-badge" id="pb-accident"></div>
+    </div>
+    <div class="ptab" onclick="switchPTab('predict')" id="pt-predict" style="font-size:10px; padding:8px 9px;">
+      📊 예측분석
+    </div>
+    <div class="ptab" onclick="switchPTab('history')" id="pt-history" style="font-size:10px; padding:8px 9px;">
+      📅 이력
+    </div>
+  </div>
+
+  <!-- Panel Body -->
+  <div class="panel-body">
+
+    <!-- TODAY TAB -->
+    <div class="ppane on" id="pp-today">
+      <div class="state-ph" id="ph-today">
+        <div class="state-ph-icon">📋</div>
+        <div class="state-ph-txt">
+          <strong>오늘의 작업 분석</strong>
+          일일작업보고서를 업로드하거나<br>샘플 데이터를 선택 후<br>
+          <b style="color:var(--accent)">AI 분석 시작</b>을 눌러주세요.
+        </div>
+      </div>
+      <div id="today-content" style="display:none;"></div>
+    </div>
+
+    <!-- TOMORROW TAB -->
+    <div class="ppane" id="pp-tomorrow">
+      <div class="state-ph" id="ph-tomorrow">
+        <div class="state-ph-icon">🌤</div>
+        <div class="state-ph-txt">
+          <strong>내일 작업 계획 검증</strong>
+          기상 데이터와 내일 계획을 대조하여<br>작업 가능 여부를 분석합니다.
+        </div>
+      </div>
+      <div id="tomorrow-content" style="display:none;"></div>
+    </div>
+
+    <!-- ════ 검측 체크리스트 탭 ════ -->
+    <div class="ppane" id="pp-checklist">
+      <!-- 공종 선택 헤더 -->
+      <div style="padding:10px 12px 0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <select class="cf-select" id="cl-work-type" onchange="buildChecklist()" style="flex:1;">
+            <option value="">공종 선택 (자동 감지 가능)</option>
+            <option value="bridge">교량 상부공 (슬래브·거푸집·철근)</option>
+            <option value="bridge-sub">교량 하부공 (교각·교대)</option>
+            <option value="tunnel">터널 굴착공 (NATM)</option>
+            <option value="tunnel-lining">터널 라이닝공</option>
+            <option value="earthwork">토공 (절토·성토·다짐)</option>
+            <option value="drainage">배수공 (암거·측구)</option>
+            <option value="pavement">포장공 (아스팔트·콘크리트)</option>
+            <option value="misc">부대공 (설계검토·인허가)</option>
+          </select>
+          <button onclick="autoDetectWorkType()" style="padding:7px 10px;background:var(--primary-d);border:1px solid var(--primary);border-radius:5px;color:var(--primary-l);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--ui);white-space:nowrap;">자동 감지</button>
+        </div>
+
+        <!-- 진행률 바 -->
+        <div class="cl-progress-wrap" id="cl-progress-wrap" style="display:none;">
+          <div class="cl-prog-row">
+            <span id="cl-prog-label">완료 0 / 전체 0</span>
+            <span id="cl-prog-pct" style="font-family:var(--mono);color:var(--green);">0%</span>
+          </div>
+          <div class="cl-prog-track"><div class="cl-prog-fill" id="cl-prog-fill" style="width:0%"></div></div>
+        </div>
+
+        <!-- 필터 버튼 -->
+        <div class="cl-toolbar" id="cl-toolbar" style="display:none;">
+          <button class="cl-filter-btn on" id="cf-all"    onclick="filterChecklist('all')">전체</button>
+          <button class="cl-filter-btn"    id="cf-todo"   onclick="filterChecklist('todo')">미완료</button>
+          <button class="cl-filter-btn"    id="cf-done"   onclick="filterChecklist('done')">완료</button>
+          <button class="cl-filter-btn red" id="cf-req"   onclick="filterChecklist('req')">필수항목</button>
+        </div>
+      </div>
+
+      <!-- 체크리스트 영역 -->
+      <div id="cl-list-area" style="padding:0 12px 60px; overflow-y:auto; flex:1;">
+        <div class="state-ph" id="cl-empty-state">
+          <div class="state-ph-icon">✅</div>
+          <div class="state-ph-txt">
+            <strong>검측 체크리스트</strong>
+            공종을 선택하거나 <b style="color:var(--primary-l)">자동 감지</b>를 누르면<br>
+            시방서 기반 체크리스트가 자동 생성됩니다.
+          </div>
+        </div>
+      </div>
+
+      <!-- 하단 제출 바 (체크리스트 생성 후 표시) -->
+      <div class="cl-submit-bar" id="cl-submit-bar" style="display:none;">
+        <button class="cl-submit-btn secondary" onclick="resetChecklist()">초기화</button>
+        <button class="cl-submit-btn primary" onclick="submitChecklist()">
+          <span>📤</span> 검측 요청서 제출
+        </button>
+      </div>
+    </div>
+
+    <!-- ════ 민원 답변 AI 초안 탭 ════ -->
+    <div class="ppane" id="pp-complaint">
+      <div style="padding:12px 12px 0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:700;">📢 민원 답변 AI 초안 생성</div>
+          <span style="font-size:9px;padding:2px 7px;border-radius:8px;background:var(--accent-d);color:var(--accent-l);border:1px solid var(--bdr-acc);font-weight:700;margin-left:auto;">AI 작성</span>
+        </div>
+
+        <!-- 입력 방식 토글 -->
+        <div style="display:flex;gap:5px;margin-bottom:10px;">
+          <button class="cl-filter-btn on" id="cmode-direct" onclick="switchComplaintMode('direct')" style="flex:1;text-align:center;">✏️ 직접 입력</button>
+          <button class="cl-filter-btn" id="cmode-import" onclick="switchComplaintMode('import')" style="flex:1;text-align:center;">📂 민원대장 불러오기</button>
+        </div>
+
+        <!-- 직접 입력 영역 -->
+        <div id="complaint-direct-area">
+          <!-- 민원 유형 칩 선택 -->
+          <div style="margin-bottom:10px;">
+            <label class="cf-label">민원 유형</label>
+            <div class="complaint-type-grid" id="complaintTypeGrid">
+              <div class="ctype-chip on" data-type="noise" onclick="selectComplaintType(this)">소음·진동</div>
+              <div class="ctype-chip" data-type="dust" onclick="selectComplaintType(this)">비산먼지</div>
+              <div class="ctype-chip" data-type="crack" onclick="selectComplaintType(this)">인접건물 균열</div>
+              <div class="ctype-chip" data-type="road" onclick="selectComplaintType(this)">도로 파손</div>
+              <div class="ctype-chip" data-type="water" onclick="selectComplaintType(this)">지하수·용출수</div>
+              <div class="ctype-chip" data-type="delay" onclick="selectComplaintType(this)">공사 지연</div>
+              <div class="ctype-chip" data-type="night" onclick="selectComplaintType(this)">야간 작업</div>
+              <div class="ctype-chip" data-type="other" onclick="selectComplaintType(this)">기타</div>
+            </div>
+          </div>
+
+          <!-- 민원 입력 폼 -->
+          <div style="margin-bottom:8px;">
+            <label class="cf-label">민원 접수 내용 <span style="color:var(--accent);font-size:9px;font-weight:400;text-transform:none;">(핵심 내용만 입력)</span></label>
+            <textarea class="cf-textarea" id="complaintInput" rows="3"
+              placeholder="예) 공사 소음으로 인해 인근 주민이 수면 방해 호소. 야간 작업 중단 요청.&#10;또는 민원인: 홍길동 / 주소: 당진시 XX동 / 접수일: 2025.03.20"></textarea>
+          </div>
+        </div>
+
+        <!-- 민원대장 불러오기 영역 -->
+        <div id="complaint-import-area" style="display:none;">
+          <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:7px;overflow:hidden;margin-bottom:8px;">
+            <div style="padding:8px 12px;background:var(--bg3);border-bottom:1px solid var(--bdr);font-size:11px;font-weight:700;color:var(--tx-m);display:flex;align-items:center;gap:6px;">
+              <span>📂 민원 및 보상 탭 — 미처리 민원 목록</span>
+              <span style="margin-left:auto;font-size:9px;color:var(--tx-d);">BCMF 연동</span>
+            </div>
+            <div id="complaintImportList" style="max-height:180px;overflow-y:auto;">
+            </div>
+          </div>
+          <div id="selectedComplaintPreview" style="display:none;background:var(--bg3);border:1px solid var(--bdr-acc);border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:11px;">
+            <div style="font-size:10px;color:var(--tx-d);margin-bottom:4px;">선택된 민원</div>
+            <div id="selectedComplaintText" style="color:var(--tx-m);line-height:1.6;"></div>
+          </div>
+        </div>
+
+        <div class="cf-row2" style="margin-bottom:8px;">
+          <div>
+            <label class="cf-label">현장 대응 상태</label>
+            <select class="cf-select" id="complaintStatus">
+              <option value="processing">조치 중</option>
+              <option value="scheduled">일정 조율 중</option>
+              <option value="resolved">조치 완료</option>
+              <option value="monitoring">모니터링 중</option>
+              <option value="impossible">기술적 불가</option>
+            </select>
+          </div>
+          <div>
+            <label class="cf-label">답변 형식</label>
+            <select class="cf-select" id="complaintFormat">
+              <option value="formal">공문 (공식)</option>
+              <option value="simple">간이 통보문</option>
+              <option value="phone">전화 응대 멘트</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="cf-gen-btn" id="complaintGenBtn" onclick="generateComplaint()">
+          <div class="btn-spinner" id="complaintSpin"></div>
+          <span id="complaintBtnTxt">✍️ AI 답변 초안 생성</span>
+        </button>
+      </div>
+
+      <!-- 초안 출력 영역 -->
+      <div style="padding:10px 12px 16px;" id="complaintOutput">
+      </div>
+    </div>
+
+    <!-- ════ 🚨 사고 대응 탭 ════ -->
+    <div class="ppane" id="pp-accident">
+      <!-- 긴급 SOS 버튼 -->
+      <div style="padding:12px 12px 0;">
+        <div style="background:rgba(224,80,80,.1);border:1px solid rgba(224,80,80,.3);border-radius:8px;padding:10px 12px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="font-size:16px;">🚨</span>
+            <div style="font-size:13px;font-weight:700;color:var(--red);">사고 발생 긴급 대응</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <button onclick="callEmergency('119')" style="padding:10px;background:var(--red);color:white;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--ui);">📞 119 소방</button>
+            <button onclick="callEmergency('112')" style="padding:10px;background:#3050C0;color:white;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--ui);">📞 112 경찰</button>
+          </div>
+        </div>
+
+        <!-- 사고 위치 입력 -->
+        <div style="margin-bottom:8px;">
+          <label class="cf-label">📍 사고 발생 위치</label>
+          <div style="display:flex;gap:6px;">
+            <input class="cf-select" id="accidentLocation" type="text"
+              placeholder="예) STA.4+192, 교량 상부 슬래브 작업 중"
+              style="flex:1;padding:8px 10px;background:var(--surf);border:1px solid var(--bdr);border-radius:6px;color:var(--tx);font-family:var(--ui);font-size:12px;outline:none;">
+            <button onclick="useCurrentLocation()" style="padding:8px 10px;background:var(--primary-d);border:1px solid var(--primary);border-radius:6px;color:var(--primary-l);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--ui);white-space:nowrap;">📡 현위치</button>
+          </div>
+        </div>
+
+        <!-- 사고 유형 -->
+        <div style="margin-bottom:8px;">
+          <label class="cf-label">사고 유형</label>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;" id="accidentTypeGrid">
+            <div class="ctype-chip on" data-type="fall" onclick="selectAccidentType(this)" style="font-size:10px;padding:6px;">추락</div>
+            <div class="ctype-chip" data-type="crush" onclick="selectAccidentType(this)" style="font-size:10px;padding:6px;">협착·압착</div>
+            <div class="ctype-chip" data-type="electric" onclick="selectAccidentType(this)" style="font-size:10px;padding:6px;">감전</div>
+            <div class="ctype-chip" data-type="collapse" onclick="selectAccidentType(this)" style="font-size:10px;padding:6px;">붕괴·매몰</div>
+            <div class="ctype-chip" data-type="fire" onclick="selectAccidentType(this)" style="font-size:10px;padding:6px;">화재·폭발</div>
+            <div class="ctype-chip" data-type="other" onclick="selectAccidentType(this)" style="font-size:10px;padding:6px;">기타</div>
+          </div>
+        </div>
+
+        <button class="cf-gen-btn" onclick="findNearbyHospitals()" id="findHospBtn" style="margin-bottom:10px;">
+          <span>🏥 인근 의료기관 검색</span>
+        </button>
+      </div>
+
+      <!-- 지도 영역 -->
+      <div id="accidentMapWrap" style="padding:0 12px;display:none;">
+        <div style="font-size:11px;font-weight:700;color:var(--tx-m);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+          🗺 인근 의료기관
+          <span id="mapCoordBadge" style="font-size:9px;font-family:var(--mono);color:var(--tx-d);background:var(--surf);padding:1px 6px;border-radius:3px;"></span>
+        </div>
+        <!-- OpenStreetMap iframe embed -->
+        <div style="border-radius:8px;overflow:hidden;border:1px solid var(--bdr);margin-bottom:8px;position:relative;">
+          <iframe id="accidentMapFrame" width="100%" height="220"
+            style="border:none;display:block;background:var(--bg3);"
+            loading="lazy" title="사고 현장 지도"></iframe>
+          <div id="mapLoadingOverlay" style="position:absolute;inset:0;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;">
+            <div style="width:24px;height:24px;border:2px solid var(--bdr);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;"></div>
+            <div style="font-size:11px;color:var(--tx-d);">지도 로딩 중...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 병원 목록 -->
+      <div id="hospitalList" style="padding:0 12px 12px;"></div>
+
+      <!-- 사고 보고서 초안 -->
+      <div id="accidentReportArea" style="padding:0 12px 12px;display:none;">
+        <div style="font-size:11px;font-weight:700;color:var(--tx-m);margin-bottom:6px;">📋 사고 초기 보고서 초안</div>
+        <div class="draft-area">
+          <div class="draft-header">
+            <div class="draft-header-title">🚨 사고 발생 초기 보고서</div>
+            <button class="draft-copy-btn" onclick="copyAccidentReport()">📋 복사</button>
+          </div>
+          <div class="draft-body" id="accidentReportBody" style="font-size:11px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ 📊 예측 분석 탭 ════ -->
+    <div class="ppane" id="pp-predict">
+      <div style="padding:12px 12px 0;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">📊 BCMF 데이터 기반 예측 분석</div>
+        <div style="font-size:10px;color:var(--tx-d);margin-bottom:12px;">현재 플랫폼에 저장된 데이터를 기반으로 AI가 예측 인사이트를 제공합니다</div>
+      </div>
+
+      <!-- 예측 카드 그리드 -->
+      <div style="padding:0 12px 12px;display:flex;flex-direction:column;gap:9px;" id="predictCards">
+
+        <!-- 공정 지연 예측 -->
+        <div class="rc warning" style="cursor:pointer;" onclick="expandPredict('delay')">
+          <div class="rc-head">
+            <span class="sev-tag m">⚠ 주의</span>
+            <div class="rc-title">공정 지연 예측 — 터널공 D+12일 위험</div>
+          </div>
+          <div class="rc-body">현재 공정률(1.43%) 대비 당해년도 목표 대비 분석 시, 천의1터널 인허가 지연이 전체 공정에 파급될 가능성이 높습니다.</div>
+          <div style="margin-top:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--tx-d);margin-bottom:3px;"><span>지연 발생 확률</span><span style="color:var(--yellow);font-family:var(--mono);">68%</span></div>
+            <div style="height:4px;background:var(--surf);border-radius:2px;overflow:hidden;"><div style="width:68%;height:100%;background:var(--yellow);border-radius:2px;"></div></div>
+          </div>
+          <div class="rc-ref"><span class="rtag">일일보고 30일 데이터</span><span class="rtag">공정표 대비</span></div>
+        </div>
+
+        <!-- 기상 영향 예측 -->
+        <div class="rc info" style="cursor:pointer;" onclick="expandPredict('weather')">
+          <div class="rc-head">
+            <span class="sev-tag l">📊 예측</span>
+            <div class="rc-title">이번 주 작업 가능일 예측 — 4일</div>
+          </div>
+          <div class="rc-body" id="weatherPredictBody">기상 API 데이터 기반으로 이번 주 7일 중 콘크리트 타설 가능 조건을 분석합니다.</div>
+          <div id="weekWeatherPreview" style="margin-top:8px;display:flex;gap:4px;"></div>
+          <div class="rc-ref"><span class="rtag">Open-Meteo 7일 예보</span></div>
+        </div>
+
+        <!-- 안전 위험 예측 -->
+        <div class="rc danger" style="cursor:pointer;" onclick="expandPredict('safety')">
+          <div class="rc-head">
+            <span class="sev-tag h">🔴 고위험</span>
+            <div class="rc-title">안전 위험도 상승 예측 — 터널 구간</div>
+          </div>
+          <div class="rc-body">용출수 발생 + 지반등급 IVB 구간 조합은 과거 유사 공사 사례에서 붕락 위험이 증가하는 패턴입니다. 즉각적인 보강 계획 수립이 필요합니다.</div>
+          <div style="margin-top:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--tx-d);margin-bottom:3px;"><span>위험도 지수</span><span style="color:var(--red);font-family:var(--mono);">HIGH (82/100)</span></div>
+            <div style="height:4px;background:var(--surf);border-radius:2px;overflow:hidden;"><div style="width:82%;height:100%;background:linear-gradient(90deg,var(--yellow),var(--red));border-radius:2px;"></div></div>
+          </div>
+          <div class="rc-ref"><span class="rtag">터널굴착 보고서</span><span class="rtag">KCS 27 40 20</span></div>
+        </div>
+
+        <!-- 자재 발주 예측 -->
+        <div class="rc ai" style="cursor:pointer;" onclick="expandPredict('material')">
+          <div class="rc-head">
+            <span class="sev-tag ai">📦 예측</span>
+            <div class="rc-title">자재 발주 선제 알림 — 레미콘 D+5일</div>
+          </div>
+          <div class="rc-body">교량 상부공 콘크리트 타설 계획(명일 예정) 기준, D+5일 내 레미콘 발주가 필요합니다. 현재 납기 리드타임 대비 여유가 부족합니다.</div>
+          <div class="rc-ref"><span class="rtag">공정표 연동</span><span class="rtag">자재 관리</span></div>
+        </div>
+
+        <!-- 미보상 토지 영향 -->
+        <div class="rc warning" style="cursor:pointer;" onclick="expandPredict('land')">
+          <div class="rc-head">
+            <span class="sev-tag m">⚠ 주의</span>
+            <div class="rc-title">토지보상 미완료 — 착공 불가 구간 예측</div>
+          </div>
+          <div class="rc-body">사유지 미보상률 100%(421,914㎡) 상태가 지속될 경우, 해당 구간 토공 착수가 불가하여 전체 공정에 영향을 미칠 수 있습니다.</div>
+          <div class="rc-ref"><span class="rtag">토지보상 현황</span><span class="rtag">공정 연동</span></div>
+        </div>
+
+      </div>
+
+      <!-- 새로고침 버튼 -->
+      <div style="padding:0 12px 12px;">
+        <button onclick="refreshPredictions()" style="width:100%;padding:9px;background:var(--surf);border:1px solid var(--bdr);border-radius:6px;color:var(--tx-m);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--ui);transition:all .15s;" onmouseover="this.style.background='var(--surf2)'" onmouseout="this.style.background='var(--surf)'">
+          🔄 예측 데이터 새로고침
+        </button>
+      </div>
+    </div>
+
+    <!-- GUIDE TAB -->
+    <div class="ppane" id="pp-guide">
+      <div class="state-ph" id="ph-guide">
+        <div class="state-ph-icon">📚</div>
+        <div class="state-ph-txt">
+          <strong>규정 기반 가이드</strong>
+          현재 공종에 맞는 표준시방서<br>핵심 항목이 여기에 표시됩니다.
+        </div>
+      </div>
+      <div id="guide-content" style="display:none;"></div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div class="ppane" id="pp-history">
+      <div class="state-ph" id="ph-history">
+        <div class="state-ph-icon">📅</div>
+        <div class="state-ph-txt">
+          <strong>AI 분석 이력</strong>
+          매일 분석 결과가 여기에 누적됩니다.
+        </div>
+      </div>
+      <div id="history-content" style="display:none;padding:12px 0;"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  JAVASCRIPT
+════════════════════════════════════════ -->
+<script>
+// ─── STATE ─────────────────────────────────
+let panelOpen    = false;
+let reportLoaded = false;
+let reportText   = '';
+let reportName   = '';
+let isLive       = false;
+let weatherData  = null;
+let analysisHistory = JSON.parse(localStorage.getItem('bcmf_ai_history') || '[]');
+
+// ─── SAMPLE DATA ────────────────────────────
+const SAMPLES = {
+  daily: {
+    name: '2025.03.20_일일작업보고.txt',
+    text: `일일 작업 보고
+공사명: 고속국도 제30호 대산-당진간 건설공사 (3공구)
+작업일: 2025년 3월 20일 (목)
+날씨: 맑음 / 최고 12.7°C / 최저 -2.1°C
+
+【금일 실적】
+● 부대공
+- 천의1터널 종점부 작업로 개설관련 인허가 진행 및 기공승락서 협의 진행
+- 천의1터널 작업계획서 작성 작업 (미승인 상태)
+- 전체공정표, 당해년도 공정표 작성 및 검토
+- 깎기 비탈면 현황조사 (시공착수 및 완료일자 검토)
+
+● 공정현황: 당해년도 3.63% / 전체 1.43%
+
+【인원 현황】
+- 총계: 15명 (원도급: 15명)
+- 누계: 1,899.5인
+
+【장비 현황】
+- 금일 투입 장비: 없음
+
+【명일 계획】
+● 부대공
+- 설계도서 검토 계속
+- 천의1터널 종점부 작업로 인허가 진행
+- 깎기 비탈면 현황조사 및 현장내 자생수목 조사
+- 작업계획서 최종 작성 및 제출 예정
+
+【토지보상현황】
+- 총 편입용지: 509,505㎡
+- 미보상: 421,914㎡ (사유지 미보상 100%)`,
+  },
+  tunnel: {
+    name: '2025.03.18_터널굴착_작업보고.txt',
+    text: `일일 작업 보고
+공사명: 고속국도 제30호 대산-당진간 건설공사 (3공구) — 천의1터널
+작업일: 2025년 3월 18일
+날씨: 흐림 / 최고 9°C / 최저 1°C
+
+【금일 실적】
+● 터널 굴착공
+- NATM 공법 적용, 상반 굴착 진행 (STA.3+450~3+470)
+- 발파 1회 실시 (폭약 48kg 사용)
+- 1차 숏크리트 타설: 두께 50mm (설계 50mm)
+- 강지보 H-150 설치 3개소 (간격 1.5m)
+- 계측기 설치 및 계측 실시 (A계측)
+
+【안전 현황】
+- 발파 전 대피 확인 완료
+- 가스 측정 실시 (CO: 0ppm, CH4: 0%, O2: 20.8%)
+- 환기 팬 1대 가동 중
+
+【특이사항】
+- STA.3+462 지점 용출수 발생 (약 2L/min)
+- 지반 등급 IVB 구간 예상 → 보강 방안 검토 필요
+- 숏크리트 반발률 측정 예정 (내일)
+
+【명일 계획】
+- 상반 굴착 계속 (STA.3+470~3+490)
+- 하반 굴착 준비
+- 용출수 처리 방안 협의
+- 숏크리트 반발률 측정`,
+  },
+  bridge: {
+    name: '2025.03.15_교량상부공_작업보고.txt',
+    text: `일일 작업 보고
+공사명: 고속국도 제30호 대산-당진간 건설공사 (3공구) — 교량 4-C1구역
+작업일: 2025년 3월 15일
+날씨: 맑음 / 최고 14°C / 최저 2°C
+
+【금일 실적】
+● 교량 상부공 (STA.4+160~4+219.0)
+- 교량 슬래브 철근 배근 작업 (D16 주철근 @200mm)
+- 배력근 D13 @300mm 배근 완료
+- 거푸집 내측 조립 완료
+- 피복두께 스페이서 설치 (40mm)
+
+【실측 기록】
+- 주철근 간격 실측: 일부 구간 220~230mm 확인 (STA.4+192~4+200)
+- 피복두께 스페이서 누락 3개소 발견 → 즉시 보완
+- 철근 이음 위치: 응력 집중부 인근에 배치됨 (재검토 필요)
+
+【인원 현황】
+- 철근공 8명, 목공 4명, 일반공 3명
+
+【명일 계획】
+- 외측 거푸집 조립 완료
+- 감리원 검측 요청 (배근 완료 후)
+- 콘크리트 타설 준비 (날씨 확인 후 결정)
+- 양생 계획 수립`,
+  }
+};
+
+// ─── INIT ────────────────────────────────────
+(function init(){
+  updateDateBadge();
+  fetchWeather();
+  renderHistoryList();
+})();
+
+function updateDateBadge(){
+  const d = new Date();
+  const days = ['일','월','화','수','목','금','토'];
+  document.getElementById('currentDateBadge').textContent =
+    `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${days[d.getDay()]})`;
+}
+
+// ─── WEATHER API ──────────────────────────────
+// Open-Meteo (무료, Key 불필요) — 당진 좌표
+async function fetchWeather(){
+  const LAT = 36.89, LON = 126.63;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max&timezone=Asia%2FSeoul&forecast_days=3`;
+  try {
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('날씨 API 오류');
+    const data = await res.json();
+    weatherData = data;
+    renderWeatherStrip(data);
+    updateStatusBarWeather(data);
+  } catch(e) {
+    document.getElementById('weatherStrip').innerHTML =
+      `<div class="wx-loading" style="color:var(--tx-d)">⚠ 기상 데이터 로드 실패 (${e.message})</div>`;
+    document.getElementById('sbWeather').textContent = '기상: 오류';
+  }
+}
+
+const WX_CODE = {
+  0:'맑음', 1:'대체로 맑음', 2:'구름 조금', 3:'흐림',
+  45:'안개', 48:'짙은 안개',
+  51:'약한 이슬비', 53:'이슬비', 55:'강한 이슬비',
+  61:'약한 비', 63:'비', 65:'강한 비',
+  71:'약한 눈', 73:'눈', 75:'강한 눈', 77:'싸락눈',
+  80:'소나기(약)', 81:'소나기', 82:'강한 소나기',
+  85:'눈소나기', 86:'강한 눈소나기',
+  95:'뇌우', 96:'뇌우(우박)', 99:'강한 뇌우(우박)'
+};
+const WX_ICON = {
+  0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫',48:'🌫',
+  51:'🌦',53:'🌦',55:'🌧',61:'🌧',63:'🌧',65:'🌧',
+  71:'🌨',73:'❄️',75:'❄️',80:'🌦',81:'🌧',82:'⛈',
+  95:'⛈',96:'⛈',99:'⛈'
+};
+
+function getWxIcon(code){ return WX_ICON[code] || '🌡'; }
+function getWxDesc(code){ return WX_CODE[code] || `코드${code}`; }
+
+function isWorkDangerous(daily, dayIndex){
+  const code = daily.weathercode[dayIndex];
+  const precip = daily.precipitation_sum[dayIndex];
+  const wind = daily.windspeed_10m_max[dayIndex];
+  const tmin = daily.temperature_2m_min[dayIndex];
+  const issues = [];
+  if(code >= 61) issues.push(`강우(${precip?.toFixed(1)}mm)`);
+  else if(code >= 71) issues.push('강설');
+  else if(code >= 95) issues.push('뇌우');
+  if(wind >= 10) issues.push(`강풍(${wind?.toFixed(0)}m/s)`);
+  if(tmin <= 5) issues.push(`저온(최저 ${tmin?.toFixed(1)}°C)`);
+  return issues;
+}
+
+function renderWeatherStrip(data){
+  const d = data.daily;
+  const todayCode = d.weathercode[0];
+  const tmax = d.temperature_2m_max[0]?.toFixed(1);
+  const tmin = d.temperature_2m_min[0]?.toFixed(1);
+  const precip = d.precipitation_sum[0]?.toFixed(1);
+  const issues = isWorkDangerous(d, 0);
+  const tomorrowIssues = isWorkDangerous(d, 1);
+
+  let warnHtml = '';
+  if(issues.length > 0){
+    warnHtml = `<span class="wx-bad">⛔ ${issues.join(' · ')}</span>`;
+  } else if(tomorrowIssues.length > 0){
+    warnHtml = `<span class="wx-warn">⚠ 내일 ${tomorrowIssues.join(' · ')}</span>`;
+  } else {
+    warnHtml = `<span class="wx-ok">✓ 작업 가능</span>`;
+  }
+
+  document.getElementById('weatherStrip').innerHTML = `
+    <div class="weather-strip">
+      <div class="wx-icon">${getWxIcon(todayCode)}</div>
+      <div class="wx-info">
+        <div class="wx-temp">${tmax}° <span style="font-size:12px;color:var(--tx-d)">/ ${tmin}°</span></div>
+        <div class="wx-desc">당진 · ${getWxDesc(todayCode)} · 강수 ${precip}mm</div>
+      </div>
+      ${warnHtml}
+    </div>
+  `;
+}
+
+function updateStatusBarWeather(data){
+  const d = data.daily;
+  const code = d.weathercode[0];
+  const tmax = d.temperature_2m_max[0]?.toFixed(1);
+  document.getElementById('sbWeather').textContent =
+    `기상: ${getWxDesc(code)} ${tmax}°C`;
+  document.getElementById('sbWeather').style.color =
+    isWorkDangerous(d, 0).length > 0 ? 'var(--red)' : 'var(--green)';
+}
+
+// ─── FILE HANDLING ────────────────────────────
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag');
+  if(e.dataTransfer.files[0]) handleReportFile(e.dataTransfer.files[0]);
+}
+
+async function handleReportFile(file){
+  if(!file) return;
+  reportName = file.name;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(ext === 'pdf'){
+    // PDF: read as text (simplified — in production use pdf.js)
+    reportText = `[PDF 파일: ${file.name}]\n파일 크기: ${(file.size/1024).toFixed(1)}KB\n\nLIVE 모드(API Key 입력)에서 실제 PDF 내용을 Claude AI가 분석합니다.\n데모 모드에서는 샘플 데이터로 분석합니다.`;
+    // For demo: use bridge sample
+    reportText = SAMPLES.bridge.text + '\n[실제 업로드 파일: ' + file.name + ']';
+  } else {
+    reportText = await readText(file);
+  }
+  onReportLoaded();
+}
+
+function readText(file){
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = () => rej(new Error('파일 읽기 실패'));
+    r.readAsText(file,'UTF-8');
+  });
+}
+
+function loadSample(key){
+  const s = SAMPLES[key];
+  reportName = s.name;
+  reportText = s.text;
+  onReportLoaded();
+}
+
+function onReportLoaded(){
+  reportLoaded = true;
+  // Hide upload area
+  document.getElementById('uploadArea').classList.add('hidden');
+  // Show report preview
+  renderReportPreview();
+  // Enable analyze button
+  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('btnTxt').textContent = '🤖 오늘의 작업 분석 시작';
+  // Update status bar
+  document.getElementById('sbReport').textContent = `일일보고: ${reportName}`;
+  document.getElementById('sbReport').style.color = 'var(--green)';
+  document.getElementById('sbSync').textContent = `마지막 동기화: ${new Date().toLocaleTimeString('ko-KR',{hour12:false})}`;
+  // Show notif badge
+  document.getElementById('notifBadge').style.display = 'flex';
+  // Auto open panel
+  if(!panelOpen) togglePanel();
+  // Update sidebar recent
+  updateSidebarRecent();
+  // Auto-detect checklist work type from report
+  setTimeout(() => autoDetectAndPreloadChecklist(), 400);
+}
+
+function renderReportPreview(){
+  const lines = reportText.split('\n').filter(l => l.trim());
+  const title = lines[0] || '일일 작업 보고';
+  const preview = document.getElementById('reportPreview');
+  preview.classList.add('show');
+  document.getElementById('viewerArea').style.display = 'none';
+
+  // Parse some key info
+  const dateMatch = reportText.match(/(\d{4}년\s*\d+월\s*\d+일)/);
+  const weatherMatch = reportText.match(/날씨[:\s]+([^\n]+)/);
+  const tomorrowMatch = reportText.match(/【명일 계획】([\s\S]*?)(?:【|$)/);
+
+  preview.innerHTML = `
+    <div class="report-header-bar">
+      <div>
+        <div class="report-title-h">${title}</div>
+        <div class="report-meta">${reportName} · ${dateMatch?.[1] || ''}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+        <span style="font-size:11px;color:var(--tx-d);">${weatherMatch?.[1] || ''}</span>
+        <button onclick="switchView()" style="padding:5px 11px;background:var(--surf);border:1px solid var(--bdr);border-radius:5px;color:var(--tx-m);font-size:11px;cursor:pointer;font-family:var(--ui);">BIM 뷰</button>
+        <button onclick="resetReport()" style="padding:5px 11px;background:var(--accent-d);border:1px solid var(--bdr-acc);border-radius:5px;color:var(--accent-l);font-size:11px;cursor:pointer;font-family:var(--ui);font-weight:600;">↩ 다른 보고서</button>
+      </div>
+    </div>
+    <div class="report-section-h">원문 내용</div>
+    <pre style="font-size:12px;color:var(--tx-m);line-height:1.8;white-space:pre-wrap;font-family:var(--ui);">${escHtml(reportText)}</pre>
+  `;
+}
+
+function switchView(){
+  const rp = document.getElementById('reportPreview');
+  const va = document.getElementById('viewerArea');
+  if(rp.classList.contains('show')){
+    rp.classList.remove('show');
+    va.style.display = '';
+  } else {
+    rp.classList.add('show');
+    va.style.display = 'none';
+  }
+}
+
+function resetReport(){
+  // 보고서 상태 초기화
+  reportLoaded = false;
+  reportText   = '';
+  reportName   = '';
+
+  // 화면 초기화
+  document.getElementById('uploadArea').classList.remove('hidden');
+  document.getElementById('reportPreview').classList.remove('show');
+  document.getElementById('viewerArea').style.display = '';
+
+  // 파일 input 초기화 (같은 파일 재업로드 가능하도록)
+  const fi = document.getElementById('reportFileInput');
+  if(fi) fi.value = '';
+
+  // 상태바 초기화
+  document.getElementById('sbReport').textContent = '일일보고: 미업로드';
+  document.getElementById('sbReport').style.color  = 'var(--tx-d)';
+  document.getElementById('sbSync').textContent    = '마지막 동기화: —';
+
+  // 알림 배지 숨김
+  document.getElementById('notifBadge').style.display = 'none';
+
+  // AI 분석 버튼 비활성화
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('btnTxt').textContent  = '⬆ 작업일지 업로드 후 분석 가능';
+
+  // 분석 결과 초기화
+  clearResults();
+
+  // 패널이 열려있으면 닫기
+  if(panelOpen) togglePanel();
+}
+
+// ─── ANALYSIS ────────────────────────────────
+async function runAnalysis(){
+  if(!reportLoaded){ alert('먼저 작업보고서를 업로드해주세요.'); return; }
+  setLoading(true);
+  clearResults();
+  try {
+    if(isLive){
+      await runLive();
+    } else {
+      await runDemo();
+    }
+    // Save to history
+    saveHistory();
+    // Show notif
+    document.getElementById('notifBadge').style.display = 'none';
+  } catch(e){
+    showError(e.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ─── DEMO ANALYSIS ────────────────────────────
+async function runDemo(){
+  await delay(600);
+
+  const text = reportText.toLowerCase();
+  const violations = [];
+  const tomorrowIssues = [];
+  const guides = [];
+
+  // ── Parse report for keywords ──
+  const hasTunnel   = text.includes('터널') || text.includes('natm') || text.includes('굴착');
+  const hasBridge   = text.includes('교량') || text.includes('슬래브') || text.includes('철근');
+  const hasConc     = text.includes('콘크리트') || text.includes('타설');
+  const hasRebar    = text.includes('철근') || text.includes('배근') || text.includes('d16');
+  const hasTomorrow = text.includes('명일') || text.includes('내일');
+  const hasPermit   = text.includes('작업계획서') || text.includes('인허가');
+  const hasUnderwater = text.includes('용출수') || text.includes('지하수');
+  const hasRebarGap = text.includes('220') || text.includes('230') || text.includes('상이') || text.includes('간격');
+  const hasSpacer   = text.includes('스페이서') || text.includes('피복') || text.includes('누락');
+  const hasBlast    = text.includes('발파') || text.includes('폭약');
+  const hasSlope    = text.includes('비탈면') || text.includes('깎기');
+  const hasWater    = text.includes('미보상') || text.includes('보상');
+
+  // Weather-based issues
+  const wxIssues = weatherData ? isWorkDangerous(weatherData.daily, 0) : [];
+  const tmrIssues = weatherData ? isWorkDangerous(weatherData.daily, 1) : [];
+
+  // ── VIOLATIONS ──
+  if(hasRebarGap){
+    violations.push({type:'danger', sev:'h',
+      title:'철근 배근 간격 기준 초과 확인',
+      body:'보고서 실측 기록에서 주철근 간격이 220~230mm로 설계 기준(D16 @200mm)을 초과한 구간이 발견되었습니다. 콘크리트 타설 전 재조정 및 감리원 검측이 반드시 필요합니다.',
+      action:'⚡ 즉시 해당 구간 재측정 → 감리원 검측 요청 → 타설 보류',
+      ref:'KCS 14 20 11 : 3.3.1 철근 배근'
+    });
+  }
+  if(hasSpacer){
+    violations.push({type:'warning', sev:'m',
+      title:'피복두께 스페이서 누락 구간 발견',
+      body:'3개소 스페이서 누락이 보고되어 최소 피복두께(40mm) 확보가 불확실한 상태입니다. 내구성 저하 및 철근 부식 위험이 있습니다.',
+      action:'📌 누락 위치 전수 재확인 및 즉시 보완 설치',
+      ref:'KCS 14 20 11 : 3.3.3 피복두께'
+    });
+  }
+  if(hasPermit){
+    violations.push({type:'info', sev:'l',
+      title:'작업계획서 미승인 / 인허가 진행 중',
+      body:'천의1터널 작업계획서가 아직 승인되지 않은 상태입니다. 관련 공종 착공 전 반드시 최종 승인이 완료되어야 합니다.',
+      action:'📌 승인 일정 확인 및 착공 전 완료 조치',
+      ref:'건설공사 안전관리 지침'
+    });
+  }
+  if(hasUnderwater){
+    violations.push({type:'warning', sev:'m',
+      title:'용출수 발생 — 보강 방안 수립 필요',
+      body:'STA.3+462 지점에서 용출수(약 2L/min)가 발생하였으며, 지반 등급 IVB 구간이 예상됩니다. 적절한 배수 처리 및 보강 방안 수립이 필요합니다.',
+      action:'📌 지질 전문가 협의 및 보강 시공 계획 수립',
+      ref:'KCS 27 40 20 NATM 터널'
+    });
+  }
+  if(wxIssues.length > 0){
+    violations.push({type:'danger', sev:'h',
+      title:`기상 불량 — ${wxIssues.join(' · ')} 감지`,
+      body:`현재 기상 조건(${wxIssues.join(', ')})은 콘크리트 타설 및 고소 작업이 금지되는 조건입니다. 관련 작업을 즉시 중단하고 기상 호전 후 감독자 승인 하에 재개해야 합니다.`,
+      action:'⛔ 콘크리트 타설 중지 / 고소 작업 금지',
+      ref:'KCS 14 20 10 : 3.5.2 기상 조건'
+    });
+  }
+  if(hasSlope){
+    violations.push({type:'info', sev:'l',
+      title:'비탈면 현황조사 착수 기록',
+      body:'깎기 비탈면 현황조사가 시작되었습니다. 시공착수 및 완료일자 기록, 설계도서 대비 비탈면 구배 검토가 필요합니다.',
+      action:'📌 비탈면 구배 및 보호공 계획 적정성 검토',
+      ref:'KCS 11 70 10 비탈면 보호공'
+    });
+  }
+
+  if(violations.length === 0){
+    violations.push({type:'success', sev:'ok',
+      title:'특이 위반사항 없음',
+      body:'보고서 내용 분석 결과, 현재 단계에서 명확한 위반 또는 위험 사항이 감지되지 않았습니다. 지속적인 현장 확인 및 정기 검측을 유지하세요.',
+      action:'', ref:''
+    });
+  }
+
+  await delay(400);
+
+  // ── TOMORROW PLAN ──
+  const tomorrowSection = reportText.match(/【명일 계획】([\s\S]*?)(?:【|$)/)?.[1] || '';
+  const tomorrowLines = tomorrowSection.split('\n').filter(l => l.trim().startsWith('-')).map(l => l.trim().replace(/^-\s*/,''));
+
+  if(tmrIssues.length > 0){
+    tomorrowIssues.push({type:'danger', sev:'h',
+      title:`내일 기상 불량 — ${tmrIssues.join(' · ')}`,
+      body:`기상 예보에 따르면 내일(${getTomorrowDateStr()}) ${tmrIssues.join(', ')} 조건이 예상됩니다. 콘크리트 타설 및 고소 작업 계획을 재검토하세요.`,
+      affectedWork: tomorrowLines.filter(l => l.includes('타설') || l.includes('거푸집') || l.includes('콘크리트')),
+      rec:'타설 일정 1~2일 연기, 실내 작업(서류, 계획서 작성) 위주로 재편성 권장'
+    });
+  } else {
+    tomorrowIssues.push({type:'success', sev:'ok',
+      title:`내일 작업 기상 조건 양호`,
+      body:`내일(${getTomorrowDateStr()}) 기상 조건은 전반적으로 양호합니다. 계획된 작업을 정상적으로 진행할 수 있습니다.`,
+      affectedWork: tomorrowLines,
+      rec:'계획된 작업 일정대로 진행 가능. 작업 전 현장 기상 재확인 권장'
+    });
+  }
+
+  // Add permit check for tomorrow
+  if(hasPermit){
+    tomorrowIssues.push({type:'warning', sev:'m',
+      title:'작업계획서 미승인 상태에서 착공 불가',
+      body:'명일 계획에 착공 예정 작업이 있으나, 작업계획서가 아직 미승인 상태입니다. 승인 완료 전 관련 공종 착공을 보류하세요.',
+      affectedWork:['작업계획서 승인 전 착공 금지'],
+      rec:'금일 중 담당 감리원에게 승인 요청'
+    });
+  }
+
+  await delay(300);
+
+  // ── GUIDES ──
+  if(hasTunnel){
+    guides.push(
+      {no:'①', title:'NATM 굴착 관리 기준', content:'굴착 사이클 준수 및 막장 관찰 기록 매회 작성. 지반 등급 변경 시 설계 변경 검토.', ref:'KCS 27 40 20 : 5.3'},
+      {no:'②', title:'숏크리트 품질 관리', content:'설계 두께(50mm 이상) 확인, 1회/50m³ 시험편 채취. 반발률 측정 및 기록.', ref:'KCS 27 40 20 : 5.5'},
+      {no:'③', title:'계측 관리 및 이상 대응', content:'A계측 매 발파 후 실시. 변위 기준치 초과 시 굴착 중지 및 보강.', ref:'KCS 27 40 20 : 5.8'},
+      {no:'④', title:'화약 취급 및 발파 안전', content:'발파원 자격증 소지자 책임 관리, 화약류 관리대장 기록, 발파 전 대피 확인.', ref:'KCS 21 40 05 화약류 관리'}
+    );
+  } else if(hasBridge || hasRebar){
+    guides.push(
+      {no:'①', title:'철근 배근 간격 및 검측', content:'D16 이상 주철근 @200mm 이하 준수. 배근 완료 후 감리원 검측 요청 (타설 24시간 전).', ref:'KCS 14 20 11 : 3.3.1'},
+      {no:'②', title:'피복두께 확보 기준', content:'교량 슬래브 최소 40mm (허용 ±5mm). 스페이서 배치 간격 1.0m 이내.', ref:'KCS 14 20 11 : 3.3.3'},
+      {no:'③', title:'콘크리트 타설 기상 제한', content:'강우량 1mm/hr 이상, 기온 5°C 이하 또는 35°C 이상 시 타설 금지.', ref:'KCS 14 20 10 : 3.5.2'},
+      {no:'④', title:'습윤 양생 관리', content:'타설 후 최소 7일 습윤양생. 초기 동해 방지를 위한 온도 관리 필수.', ref:'KCS 14 20 10 : 3.7'}
+    );
+  } else {
+    guides.push(
+      {no:'①', title:'일반 건설공사 안전 관리', content:'매일 작업 시작 전 TBM 실시 및 기록. 위험 요인 발굴 및 개선 조치.', ref:'KCS 21 40 05'},
+      {no:'②', title:'비탈면 안전 관리', content:'강우 후 비탈면 점검 의무 실시. 용수, 균열 등 이상 징후 발견 시 즉시 보고.', ref:'KCS 11 70 10'},
+      {no:'③', title:'설계도서 검토 절차', content:'시공 전 설계도서 상세 검토 및 시공 가능성 검토서 제출. 불명확 사항은 질의회신 처리.', ref:'건설공사 품질관리 절차'}
+    );
+  }
+
+  // ── RENDER ──
+  renderTodayResults(violations);
+  renderTomorrowResults(tomorrowIssues, tomorrowLines, tomorrowSection);
+  renderGuideResults(guides);
+
+  // Switch to today tab
+  switchPTab('today');
+}
+
+// ─── LIVE ANALYSIS ───────────────────────────
+async function runLive(){
+  const apiKey = document.getElementById('panelApiKey').value.trim();
+  const wxSummary = weatherData
+    ? `오늘: ${getWxDesc(weatherData.daily.weathercode[0])} / 최고 ${weatherData.daily.temperature_2m_max[0]?.toFixed(1)}°C / 강수 ${weatherData.daily.precipitation_sum[0]?.toFixed(1)}mm\n내일: ${getWxDesc(weatherData.daily.weathercode[1])} / 최고 ${weatherData.daily.temperature_2m_max[1]?.toFixed(1)}°C / 강수 ${weatherData.daily.precipitation_sum[1]?.toFixed(1)}mm`
+    : '기상 데이터 없음';
+
+  const prompt = `당신은 건설공사 품질·안전 감리 AI 전문가입니다.
+아래 [일일작업보고서]와 [기상 데이터]를 분석하여 JSON으로만 응답하세요.
+
+[일일작업보고서]
+${reportText}
+
+[기상 데이터 — 당진 현장]
+${wxSummary}
+
+다음 JSON 구조로 응답 (다른 텍스트 없이 JSON만):
+{
+  "violations": [{"severity":"HIGH|MID|LOW","title":"제목","body":"내용(2~3문장)","action":"조치사항","ref":"규정 조항"}],
+  "tomorrow_issues": [{"severity":"HIGH|MID|LOW","title":"제목","body":"내용","affected":"영향 작업","rec":"권고사항"}],
+  "guides": [{"no":"①","title":"제목","content":"내용","ref":"KCS 조항"}],
+  "summary": {"high":0,"mid":0,"low":0,"overall":"종합 소견"}
+}
+- violations: 보고서 기반 위반·위험 사항
+- tomorrow_issues: 내일 계획 + 기상 기반 작업 가능 여부
+- guides: 현재 공종 표준시방서 핵심 3~5개
+- 한국어, 기술적으로 정확하게`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:2000,
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  if(!res.ok){
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  const raw = data.content?.map(b=>b.text||'').join('') || '';
+  let result;
+  try {
+    const clean = raw.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+    result = JSON.parse(clean);
+  } catch {
+    const m = raw.match(/\{[\s\S]*\}/);
+    if(m){ try{ result=JSON.parse(m[0]); }catch{ throw new Error('JSON 파싱 실패. 다시 시도해주세요.'); } }
+    else throw new Error('API 응답 파싱 실패');
+  }
+
+  // Convert API response to same format as demo
+  const violations = (result.violations||[]).map(v=>({
+    type: v.severity==='HIGH'?'danger':v.severity==='MID'?'warning':'info',
+    sev: v.severity==='HIGH'?'h':v.severity==='MID'?'m':'l',
+    title:v.title, body:v.body, action:v.action, ref:v.ref
+  }));
+  const tomorrowIssues = (result.tomorrow_issues||[]).map(t=>({
+    type: t.severity==='HIGH'?'danger':t.severity==='MID'?'warning':'info',
+    sev: t.severity==='HIGH'?'h':t.severity==='MID'?'m':'l',
+    title:t.title, body:t.body,
+    affectedWork:[t.affected], rec:t.rec
+  }));
+  const guides = (result.guides||[]).map(g=>({
+    no:g.no, title:g.title, content:g.content, ref:g.ref
+  }));
+
+  renderTodayResults(violations);
+  renderTomorrowResults(tomorrowIssues, [], '');
+  renderGuideResults(guides);
+  switchPTab('today');
+}
+
+// ─── RENDER FUNCTIONS ────────────────────────
+function renderTodayResults(violations){
+  document.getElementById('ph-today').style.display = 'none';
+  const c = document.getElementById('today-content');
+  c.style.display = 'block';
+  c.innerHTML = '';
+
+  const hCount = violations.filter(v=>v.sev==='h').length;
+  const mCount = violations.filter(v=>v.sev==='m').length;
+  const lCount = violations.filter(v=>!['h','m'].includes(v.sev)).length;
+
+  c.innerHTML += `
+    <div class="stat-row">
+      <div class="stat-box"><div class="sv r">${hCount}</div><div class="sl">고위험</div></div>
+      <div class="stat-box"><div class="sv y">${mCount}</div><div class="sl">주의</div></div>
+      <div class="stat-box"><div class="sv g">${lCount}</div><div class="sl">확인</div></div>
+    </div>
+    <div class="sec-hd">위반·위험 분석 (${violations.length}건)</div>
+  `;
+  violations.forEach((v,i) => {
+    const el = document.createElement('div');
+    el.className = `rc ${v.type}`;
+    el.style.animationDelay = (i*.08)+'s';
+    el.innerHTML = `
+      <div class="rc-head">
+        <span class="sev-tag ${v.sev}">${v.sev==='h'?'고위험':v.sev==='m'?'주의':v.sev==='ok'?'✓ 양호':'확인'}</span>
+        <div class="rc-title">${v.title}</div>
+      </div>
+      <div class="rc-body">${v.body}</div>
+      ${v.action?`<div class="rc-action">${v.action}</div>`:''}
+      ${v.ref?`<div class="rc-ref"><span class="rtag">📖 ${v.ref}</span></div>`:''}
+    `;
+    c.appendChild(el);
+  });
+
+  // Update badge
+  const badgeCount = hCount + mCount;
+  const badge = document.getElementById('pb-today');
+  badge.textContent = badgeCount;
+  badge.classList.toggle('on', badgeCount > 0);
+}
+
+function renderTomorrowResults(issues, plannedLines, tomorrowSection){
+  document.getElementById('ph-tomorrow').style.display = 'none';
+  const c = document.getElementById('tomorrow-content');
+  c.style.display = 'block';
+  c.innerHTML = '';
+
+  const d = weatherData?.daily;
+  if(d){
+    const day1 = d.weathercode[1];
+    const tmax1 = d.temperature_2m_max[1]?.toFixed(1);
+    const tmin1 = d.temperature_2m_min[1]?.toFixed(1);
+    const precip1 = d.precipitation_sum[1]?.toFixed(1);
+    const wind1 = d.windspeed_10m_max[1]?.toFixed(0);
+    c.innerHTML += `
+      <div class="rc info" style="margin-bottom:9px;">
+        <div class="rc-head">
+          <span style="font-size:20px;">${getWxIcon(day1)}</span>
+          <div>
+            <div class="rc-title">내일(${getTomorrowDateStr()}) 기상 예보</div>
+            <div class="rc-body" style="margin:3px 0 0;">${getWxDesc(day1)} · 최고 ${tmax1}° / 최저 ${tmin1}° · 강수 ${precip1}mm · 풍속 ${wind1}m/s</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  if(tomorrowSection || plannedLines.length > 0){
+    c.innerHTML += `<div class="sec-hd">내일 계획 작업</div>`;
+    const planCard = document.createElement('div');
+    planCard.className = 'rc ai';
+    const lines = plannedLines.length > 0 ? plannedLines :
+      tomorrowSection.split('\n').filter(l => l.trim()).map(l => l.trim().replace(/^-\s*/,''));
+    planCard.innerHTML = `
+      <div class="rc-title" style="margin-bottom:7px;">📋 명일 작업 계획</div>
+      <ul class="tc-items">
+        ${lines.slice(0,8).map(l=>`<li class="tc-item"><div class="tc-dot" style="background:var(--primary-l)"></div><span class="rc-body">${l}</span></li>`).join('')}
+      </ul>
+    `;
+    c.appendChild(planCard);
+  }
+
+  c.innerHTML += `<div class="sec-hd">기상 기반 작업 가능성 검토</div>`;
+  issues.forEach((v,i) => {
+    const el = document.createElement('div');
+    el.className = `rc ${v.type}`;
+    el.style.animationDelay = (i*.08)+'s';
+    el.innerHTML = `
+      <div class="rc-head">
+        <span class="sev-tag ${v.sev}">${v.sev==='h'?'작업불가':v.sev==='m'?'주의':v.sev==='ok'?'✓ 가능':'확인'}</span>
+        <div class="rc-title">${v.title}</div>
+      </div>
+      <div class="rc-body">${v.body}</div>
+      ${v.affectedWork?.length>0 && v.affectedWork[0]?`<div class="rc-body" style="margin-top:5px;color:var(--tx-d);">영향: ${Array.isArray(v.affectedWork)?v.affectedWork.join(' / '):v.affectedWork}</div>`:''}
+      ${v.rec?`<div class="rc-action" style="color:var(--cyan);">💡 ${v.rec}</div>`:''}
+    `;
+    c.appendChild(el);
+  });
+
+  const warnCount = issues.filter(v=>v.sev==='h'||v.sev==='m').length;
+  const badge = document.getElementById('pb-tomorrow');
+  badge.textContent = warnCount;
+  badge.classList.toggle('on', warnCount > 0);
+}
+
+function renderGuideResults(guides){
+  document.getElementById('ph-guide').style.display = 'none';
+  const c = document.getElementById('guide-content');
+  c.style.display = 'block';
+  c.innerHTML = '<div class="sec-hd">현재 공종 표준시방서 핵심</div>';
+  const card = document.createElement('div');
+  card.className = 'rc info';
+  card.innerHTML = guides.map(g => `
+    <div class="guide-row">
+      <div class="gnum">${g.no}</div>
+      <div>
+        <div class="gtitle">${g.title}</div>
+        <div class="gcontent">${g.content}</div>
+        ${g.ref?`<div class="gref">📖 ${g.ref}</div>`:''}
+      </div>
+    </div>
+  `).join('');
+  c.appendChild(card);
+}
+
+// ─── HISTORY ─────────────────────────────────
+function saveHistory(){
+  const entry = {
+    date: new Date().toISOString(),
+    reportName,
+    isLive,
+    violationCount: document.getElementById('pb-today').textContent || '0',
+    tmrCount: document.getElementById('pb-tomorrow').textContent || '0'
+  };
+  analysisHistory.unshift(entry);
+  if(analysisHistory.length > 20) analysisHistory.pop();
+  try { localStorage.setItem('bcmf_ai_history', JSON.stringify(analysisHistory)); } catch{}
+  renderHistoryList();
+  updateSidebarRecent();
+}
+
+function renderHistoryList(){
+  const c = document.getElementById('history-content');
+  if(!c) return;
+  if(analysisHistory.length === 0){
+    document.getElementById('ph-history').style.display = 'block';
+    c.style.display = 'none';
+    return;
+  }
+  document.getElementById('ph-history').style.display = 'none';
+  c.style.display = 'block';
+  c.innerHTML = analysisHistory.slice(0,10).map(h => {
+    const d = new Date(h.date);
+    const ds = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false})}`;
+    return `
+      <div class="rc ai" style="margin:0 12px 8px;animation:none;">
+        <div class="rc-title" style="font-size:11px;">${h.reportName || '작업보고서'}</div>
+        <div class="rc-body" style="margin-top:4px;display:flex;gap:8px;align-items:center;">
+          <span style="color:var(--red);">⚡ 위반 ${h.violationCount}건</span>
+          <span style="color:var(--yellow);">🌤 내일주의 ${h.tmrCount}건</span>
+          <span class="rtag" style="margin-left:auto;">${h.isLive?'LIVE':'DEMO'}</span>
+        </div>
+        <div style="font-size:9px;color:var(--tx-d);margin-top:3px;font-family:var(--mono);">${ds}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateSidebarRecent(){
+  const list = document.getElementById('recentAnalysisList');
+  if(analysisHistory.length === 0) return;
+  list.innerHTML = analysisHistory.slice(0,3).map(h => {
+    const d = new Date(h.date);
+    const ds = `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false})}`;
+    return `<div class="sb-item" style="font-size:11px;padding:5px 13px;cursor:pointer;" onclick="switchPTab('history');if(!panelOpen)togglePanel();">
+      <span style="color:var(--accent)">⚡</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${h.reportName||'보고서'}</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--tx-d);">${ds}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── UTILS ───────────────────────────────────
+function switchPTab(name){
+  ['today','tomorrow','checklist','complaint','accident','predict','guide','history'].forEach(id => {
+    const pt = document.getElementById('pt-'+id);
+    const pp = document.getElementById('pp-'+id);
+    if(pt) pt.classList.toggle('on', id===name);
+    if(pp) pp.classList.toggle('on', id===name);
+  });
+  if(name==='predict') renderWeekWeather();
+  if(name==='complaint' && document.getElementById('cmode-import').classList.contains('on')) renderComplaintImportList();
+}
+function checkApiMode(){
+  const key = document.getElementById('panelApiKey').value.trim();
+  isLive = key.startsWith('sk-');
+  document.getElementById('modeTag').textContent = isLive ? 'LIVE' : 'DEMO';
+  document.getElementById('modeTag').className = 'mode-tag ' + (isLive ? 'live' : 'demo');
+}
+function toggleApiVis(){
+  const i = document.getElementById('panelApiKey');
+  i.type = i.type==='password' ? 'text' : 'password';
+}
+function getTomorrowDateStr(){
+  const d = new Date();
+  d.setDate(d.getDate()+1);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+function autoDetectAndPreloadChecklist(){
+  if(!reportLoaded) return;
+  const t = reportText.toLowerCase();
+  let detected = '';
+  if(t.includes('터널')&&(t.includes('라이닝')||t.includes('콘크리트 타설'))) detected='tunnel-lining';
+  else if(t.includes('natm')||t.includes('터널')&&t.includes('굴착')) detected='tunnel';
+  else if(t.includes('슬래브')||t.includes('상부공')||(t.includes('교량')&&t.includes('철근'))) detected='bridge';
+  else if(t.includes('교각')||t.includes('교대')||t.includes('하부공')) detected='bridge-sub';
+  else if(t.includes('아스팔트')||t.includes('포장')) detected='pavement';
+  else if(t.includes('암거')||t.includes('배수')) detected='drainage';
+  else if(t.includes('성토')||t.includes('절토')||t.includes('다짐')||t.includes('비탈면')) detected='earthwork';
+  else if(t.includes('작업계획서')||t.includes('인허가')||t.includes('설계도서')) detected='misc';
+  if(detected){
+    document.getElementById('cl-work-type').value = detected;
+    buildChecklist();
+    // Update sidebar badge
+    const db = CHECKLIST_DB[detected];
+    if(db){
+      const req = db.groups.flatMap(g=>g.items).filter(i=>i.req).length;
+      document.querySelector('.sb-item:nth-child(2) .sb-badge')?.remove();
+    }
+  }
+}
+
+function clearResults(){
+  ['today','tomorrow','guide'].forEach(id => {
+    document.getElementById('ph-'+id).style.display = 'block';
+    document.getElementById(id+'-content').style.display = 'none';
+    document.getElementById(id+'-content').innerHTML = '';
+    document.getElementById('pb-'+id)?.classList.remove('on');
+  });
+}
+function setLoading(on){
+  const btn = document.getElementById('analyzeBtn');
+  const spin = document.getElementById('btnSpin');
+  btn.disabled = on;
+  btn.classList.toggle('loading', on);
+  if(!on){
+    document.getElementById('btnTxt').textContent = isLive ? '🤖 AI 재분석 (LIVE)' : '🤖 AI 재분석 (DEMO)';
+  }
+  if(on){
+    ['today','tomorrow'].forEach(id => {
+      document.getElementById('ph-'+id).innerHTML = `
+        <div class="state-ph-icon">🤖</div>
+        <div class="state-ph-txt"><strong>AI 분석 중...</strong>
+        작업보고서와 기상 데이터를 분석하고 있습니다.</div>
+        <div class="lbar"><div class="lfill"></div></div>
+      `;
+      document.getElementById('ph-'+id).style.display = 'block';
+      document.getElementById(id+'-content').style.display = 'none';
+    });
+  }
+}
+function showError(msg){
+  ['today','tomorrow'].forEach(id => {
+    document.getElementById('ph-'+id).style.display = 'none';
+    const c = document.getElementById(id+'-content');
+    c.style.display = 'block';
+    c.innerHTML = `<div class="err-box">❌ <strong>오류 발생</strong><br>${msg}<br><br><small style="color:var(--tx-d)">API Key가 없으면 DEMO 모드로 자동 실행됩니다.</small></div>`;
+  });
+}
+function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function addBimTag(text, isAlert){
+  const wrap = document.getElementById('bimTags');
+  const tag = document.createElement('div');
+  tag.style.cssText = `
+    background:rgba(13,17,23,.88); border:1px solid ${isAlert?'rgba(189,84,41,.6)':'rgba(73,98,89,.4)'};
+    border-left:2px solid ${isAlert?'var(--accent)':'var(--primary-l)'};
+    padding:3px 8px; font-size:10px; font-family:var(--mono);
+    color:${isAlert?'#FF9090':'var(--tx-m)'}; border-radius:0 3px 3px 0;
+    white-space:nowrap; animation:cardIn .4s ease; margin-bottom:2px;
+  `;
+  tag.textContent = text;
+  wrap.appendChild(tag);
+  setTimeout(() => { if(tag.parentNode) tag.parentNode.removeChild(tag); }, 8000);
+}
+
+// ══════════════════════════════════════════════════
+// ✅ 검측 체크리스트
+// ══════════════════════════════════════════════════
+const CHECKLIST_DB = {
+  bridge: {
+    label:'교량 상부공',
+    groups:[
+      { name:'철근 공사', items:[
+        { id:'b1', title:'주철근 배근 간격 확인 (설계 @200mm)', ref:'KCS 14 20 11 : 3.3.1', req:true },
+        { id:'b2', title:'배력근 배근 간격 및 수량 확인', ref:'KCS 14 20 11 : 3.3.1', req:true },
+        { id:'b3', title:'철근 피복두께 스페이서 설치 (40mm)', ref:'KCS 14 20 11 : 3.3.3', req:true },
+        { id:'b4', title:'이음 위치 및 겹침 길이 확인', ref:'KCS 14 20 11 : 3.4', req:true },
+        { id:'b5', title:'철근 청결 상태 (흙·유분 제거)', ref:'KCS 14 20 11 : 3.2', req:false },
+        { id:'b6', title:'정착 길이 확인 (지지점 처리)', ref:'KCS 14 20 11 : 3.5', req:false },
+      ]},
+      { name:'거푸집 공사', items:[
+        { id:'b7', title:'거푸집 조립 상태 및 수직도 확인', ref:'KCS 14 20 12 : 3.2', req:true },
+        { id:'b8', title:'거푸집 지지재(동바리) 안전성 확인', ref:'KCS 14 20 12 : 3.3', req:true },
+        { id:'b9', title:'이음부 틈 처리 및 누출 방지', ref:'KCS 14 20 12 : 3.4', req:true },
+        { id:'b10', title:'슬래브 두께 확인 (허용오차 ±10mm)', ref:'KCS 14 20 12 : 3.6', req:false },
+      ]},
+      { name:'콘크리트 타설 준비', items:[
+        { id:'b11', title:'타설 전 기상 조건 확인 (강우 여부)', ref:'KCS 14 20 10 : 3.5.2', req:true, note:'강우 1mm/hr 이상 시 타설 금지' },
+        { id:'b12', title:'기온 확인 (5°C~35°C 범위)', ref:'KCS 14 20 10 : 3.5.2', req:true },
+        { id:'b13', title:'레미콘 배합설계 서류 확인', ref:'KCS 14 20 10 : 3.2', req:true },
+        { id:'b14', title:'감리원 검측 완료 확인', ref:'품질검측 절차 04항', req:true },
+      ]},
+      { name:'안전 관리', items:[
+        { id:'b15', title:'추락방지망 및 안전난간 설치', ref:'KCS 21 40 05', req:true },
+        { id:'b16', title:'작업자 안전모·안전대 착용 확인', ref:'산업안전보건법 제38조', req:true },
+      ]},
+    ]
+  },
+  'bridge-sub': {
+    label:'교량 하부공',
+    groups:[
+      { name:'기초 공사', items:[
+        { id:'bs1', title:'기초 바닥면 레벨 및 지지력 확인', ref:'KCS 11 50 05', req:true },
+        { id:'bs2', title:'기초 철근 피복두께 (토중 75mm)', ref:'KCS 14 20 11 : 3.3.3', req:true },
+        { id:'bs3', title:'기초 거푸집 수직도 (허용 H/300)', ref:'KCS 14 20 12', req:true },
+      ]},
+      { name:'교각·교대', items:[
+        { id:'bs4', title:'철근 이음 위치 (기둥 중앙부 원칙)', ref:'KCS 14 20 11 : 3.4', req:true },
+        { id:'bs5', title:'띠철근 배근 간격 확인', ref:'KCS 14 20 11', req:true },
+        { id:'bs6', title:'매립 철물 위치 및 고정 확인', ref:'설계도면 대조', req:false },
+        { id:'bs7', title:'기둥 수직도 확인 (허용 H/300)', ref:'KCS 14 20 12', req:true },
+      ]},
+      { name:'안전', items:[
+        { id:'bs8', title:'굴착부 되메우기 완료 여부', ref:'KCS 11 10 05', req:false },
+        { id:'bs9', title:'안전 펜스 및 경고 표지 설치', ref:'KCS 21 40 05', req:true },
+      ]},
+    ]
+  },
+  tunnel: {
+    label:'터널 굴착공 (NATM)',
+    groups:[
+      { name:'굴착 관리', items:[
+        { id:'t1', title:'막장 관찰 기록지 작성', ref:'KCS 27 40 20 : 5.3.1', req:true },
+        { id:'t2', title:'굴착 단면 설계 기준 준수 여부', ref:'KCS 27 40 20 : 5.3', req:true },
+        { id:'t3', title:'지반 등급 판정 및 지보 패턴 적용', ref:'KCS 27 40 20 : 4.2', req:true },
+        { id:'t4', title:'용출수 발생 여부 확인 및 기록', ref:'KCS 27 40 20 : 5.3.5', req:true },
+      ]},
+      { name:'숏크리트', items:[
+        { id:'t5', title:'숏크리트 두께 확인 (설계 50mm 이상)', ref:'KCS 27 40 20 : 5.5', req:true },
+        { id:'t6', title:'시험편 채취 (1회/50m³)', ref:'KCS 27 40 20 : 5.5.4', req:true },
+        { id:'t7', title:'반발률 측정 및 기록', ref:'KCS 27 40 20 : 5.5.5', req:false },
+      ]},
+      { name:'강지보·록볼트', items:[
+        { id:'t8', title:'강지보 설치 간격 확인 (설계 1.0~1.5m)', ref:'KCS 27 40 20 : 5.6', req:true },
+        { id:'t9', title:'록볼트 설치 수량 및 위치 확인', ref:'KCS 27 40 20 : 5.7', req:true },
+        { id:'t10', title:'인발 시험 실시 여부', ref:'KCS 27 40 20 : 5.7.4', req:false },
+      ]},
+      { name:'계측 및 안전', items:[
+        { id:'t11', title:'A계측 실시 및 결과 기록', ref:'KCS 27 40 20 : 5.8', req:true },
+        { id:'t12', title:'가스 측정 (CO, CH4, O2) 결과 확인', ref:'산업안전보건기준 규칙', req:true, note:'O2 18% 미만 시 작업 중지' },
+        { id:'t13', title:'환기 팬 가동 상태 확인', ref:'터널 안전관리 기준', req:true },
+        { id:'t14', title:'발파 전·후 대피 및 안전 확인', ref:'화약류 관리법', req:true },
+      ]},
+    ]
+  },
+  'tunnel-lining': {
+    label:'터널 라이닝공',
+    groups:[
+      { name:'라이닝 콘크리트', items:[
+        { id:'tl1', title:'라이닝 두께 확인 (설계 두께 ±50mm)', ref:'KCS 27 40 20 : 5.9', req:true },
+        { id:'tl2', title:'타설 구간 청결 및 이물질 제거', ref:'KCS 14 20 10 : 3.5', req:true },
+        { id:'tl3', title:'거푸집 대차 조립 상태 및 수직도', ref:'KCS 14 20 12', req:true },
+        { id:'tl4', title:'주입 구멍 위치 및 콘크리트 충전 확인', ref:'KCS 27 40 20 : 5.9.4', req:true },
+      ]},
+      { name:'방수', items:[
+        { id:'tl5', title:'방수 시트 이음부 처리 확인', ref:'KCS 27 40 20 : 5.10', req:true },
+        { id:'tl6', title:'배수재 설치 위치 및 연속성', ref:'KCS 27 40 20 : 5.10.2', req:true },
+      ]},
+    ]
+  },
+  earthwork: {
+    label:'토공',
+    groups:[
+      { name:'절토·성토', items:[
+        { id:'e1', title:'비탈면 구배 확인 (설계도면 대비)', ref:'KCS 11 70 05', req:true },
+        { id:'e2', title:'성토 재료 품질 기준 충족 여부', ref:'KCS 11 10 05 : 3.3', req:true },
+        { id:'e3', title:'다짐도 현장 시험 (95% 이상)', ref:'KCS 11 10 05 : 3.5', req:true },
+        { id:'e4', title:'층별 다짐 두께 확인 (300mm 이하)', ref:'KCS 11 10 05 : 3.4', req:true },
+      ]},
+      { name:'비탈면 보호', items:[
+        { id:'e5', title:'비탈면 용수 처리 상태 확인', ref:'KCS 11 70 10', req:true },
+        { id:'e6', title:'비탈면 보호공 설치 (씨앗뿜기 등)', ref:'KCS 11 70 10 : 3.3', req:false },
+        { id:'e7', title:'인접 구조물 영향 여부 확인', ref:'설계 검토', req:false },
+      ]},
+      { name:'안전', items:[
+        { id:'e8', title:'굴착면 붕괴 방지 조치 확인', ref:'산업안전보건기준 규칙 제341조', req:true },
+        { id:'e9', title:'안전 경계선 및 접근 통제', ref:'KCS 21 40 05', req:true },
+      ]},
+    ]
+  },
+  drainage: {
+    label:'배수공',
+    groups:[
+      { name:'암거', items:[
+        { id:'d1', title:'암거 기초 지지력 확인', ref:'KCS 24 10 10', req:true },
+        { id:'d2', title:'암거 철근 배근 및 피복두께', ref:'KCS 14 20 11', req:true },
+        { id:'d3', title:'되메우기 재료 및 다짐 확인', ref:'KCS 11 10 05', req:true },
+      ]},
+      { name:'측구·집수정', items:[
+        { id:'d4', title:'측구 종단 기울기 확인 (설계 기울기)', ref:'도로 배수시설 기준', req:true },
+        { id:'d5', title:'집수정 규격 및 위치 확인', ref:'설계도면 대조', req:true },
+      ]},
+    ]
+  },
+  pavement: {
+    label:'포장공',
+    groups:[
+      { name:'아스팔트 포장', items:[
+        { id:'p1', title:'기층 다짐도 확인 (95% 이상)', ref:'KCS 44 50 05', req:true },
+        { id:'p2', title:'아스팔트 혼합물 온도 확인 (130~170°C)', ref:'KCS 44 50 05 : 3.4', req:true, note:'150°C 이하 반입 시 반품' },
+        { id:'p3', title:'포설 두께 확인 (허용 ±5mm)', ref:'KCS 44 50 05 : 3.5', req:true },
+        { id:'p4', title:'다짐 횟수 및 온도 관리', ref:'KCS 44 50 05 : 3.6', req:true },
+        { id:'p5', title:'평탄성 측정 (IRI 기준)', ref:'KCS 44 50 05 : 3.8', req:false },
+      ]},
+    ]
+  },
+  misc: {
+    label:'부대공',
+    groups:[
+      { name:'설계도서 검토', items:[
+        { id:'m1', title:'설계도서 일치성 검토 완료', ref:'건설공사 품질관리 절차', req:true },
+        { id:'m2', title:'시공성 검토서 제출 여부', ref:'설계 지침', req:false },
+        { id:'m3', title:'불명확 사항 질의회신 처리', ref:'건설공사 계약 일반조건', req:false },
+      ]},
+      { name:'인허가·착공 준비', items:[
+        { id:'m4', title:'작업계획서 승인 여부', ref:'건설안전관리 지침', req:true },
+        { id:'m5', title:'인허가 서류 완비 확인', ref:'관계 법령', req:true },
+        { id:'m6', title:'착공신고서 제출 여부', ref:'건설산업기본법', req:true },
+      ]},
+    ]
+  }
+};
+
+let clState = {}; // { itemId: 'todo'|'done'|'na' }
+let clFilter = 'all';
+let clWorkType = '';
+
+function autoDetectWorkType(){
+  if(!reportLoaded){ alert('작업보고서를 먼저 업로드하세요.'); return; }
+  const t = reportText.toLowerCase();
+  let detected = '';
+  if(t.includes('터널') && (t.includes('라이닝')||t.includes('콘크리트 타설'))) detected='tunnel-lining';
+  else if(t.includes('natm')||t.includes('터널')&&t.includes('굴착')) detected='tunnel';
+  else if(t.includes('슬래브')||t.includes('상부공')||t.includes('교량')&&t.includes('철근')) detected='bridge';
+  else if(t.includes('교각')||t.includes('교대')||t.includes('하부공')) detected='bridge-sub';
+  else if(t.includes('아스팔트')||t.includes('포장')) detected='pavement';
+  else if(t.includes('암거')||t.includes('배수')) detected='drainage';
+  else if(t.includes('성토')||t.includes('절토')||t.includes('다짐')||t.includes('비탈면')) detected='earthwork';
+  else if(t.includes('작업계획서')||t.includes('인허가')||t.includes('설계도서')) detected='misc';
+  if(detected){
+    document.getElementById('cl-work-type').value = detected;
+    buildChecklist();
+  } else {
+    alert('작업보고서에서 공종을 자동으로 인식하지 못했습니다.\n공종을 직접 선택해주세요.');
+  }
+}
+
+function buildChecklist(){
+  const sel = document.getElementById('cl-work-type').value;
+  if(!sel) return;
+  clWorkType = sel;
+  const db = CHECKLIST_DB[sel];
+  if(!db) return;
+
+  // Init state
+  clState = {};
+  db.groups.forEach(g => g.items.forEach(it => { clState[it.id] = 'todo'; }));
+
+  renderChecklistUI(db);
+  document.getElementById('cl-progress-wrap').style.display = 'block';
+  document.getElementById('cl-toolbar').style.display = 'flex';
+  document.getElementById('cl-submit-bar').style.display = 'flex';
+  document.getElementById('cl-empty-state').style.display = 'none';
+
+  // Update sidebar badge
+  updateClBadge();
+
+  // Also update checklist tab badge
+  const badge = document.getElementById('pb-checklist');
+  const reqCount = Object.values(db.groups).flatMap(g=>g.items).filter(i=>i.req).length;
+  badge.textContent = reqCount;
+  badge.classList.add('on');
+}
+
+function renderChecklistUI(db){
+  const area = document.getElementById('cl-list-area');
+  // Keep empty state element
+  const empty = document.getElementById('cl-empty-state');
+  area.innerHTML = '';
+  area.appendChild(empty);
+  empty.style.display = 'none';
+
+  db.groups.forEach(g => {
+    const doneCount = g.items.filter(it => clState[it.id]==='done').length;
+    const total = g.items.length;
+    const groupEl = document.createElement('div');
+    groupEl.className = 'cl-group';
+    groupEl.id = 'clg-'+g.name;
+
+    let itemsHtml = g.items.map(it => {
+      const st = clState[it.id];
+      const hide = (clFilter==='todo'&&st!=='todo') || (clFilter==='done'&&st!=='done') || (clFilter==='req'&&!it.req) ? 'style="display:none"' : '';
+      return `
+        <div class="cl-item ${st==='done'?'done':''} ${st==='na'?'na skip':''}"
+          id="cli-${it.id}" ${hide} onclick="toggleClItem('${it.id}')">
+          <div class="cl-checkbox">${st==='done'?'✓':st==='na'?'—':''}</div>
+          <div class="cl-item-body">
+            <div class="cl-item-title">${it.req?'<span style="color:var(--accent);margin-right:3px;">★</span>':''}${it.title}</div>
+            <div class="cl-item-ref">${it.ref}</div>
+            ${it.note?`<div class="cl-item-note">⚠ ${it.note}</div>`:''}
+          </div>
+          <div class="cl-item-actions" onclick="event.stopPropagation()">
+            <button class="cl-act-btn" onclick="setClItem('${it.id}','done')">완료</button>
+            <button class="cl-act-btn na-btn" onclick="setClItem('${it.id}','na')">해당없음</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    groupEl.innerHTML = `
+      <div class="cl-group-hd">
+        ${g.name}
+        <span class="ghd-badge">${doneCount}/${total}</span>
+      </div>
+      ${itemsHtml}
+    `;
+    area.appendChild(groupEl);
+  });
+  updateClProgress();
+}
+
+function toggleClItem(id){
+  clState[id] = clState[id]==='done' ? 'todo' : 'done';
+  const el = document.getElementById('cli-'+id);
+  const cb = el.querySelector('.cl-checkbox');
+  el.classList.toggle('done', clState[id]==='done');
+  el.classList.remove('na','skip');
+  cb.textContent = clState[id]==='done' ? '✓' : '';
+  updateClProgress();
+  updateClBadge();
+}
+
+function setClItem(id, state){
+  clState[id] = state;
+  const el = document.getElementById('cli-'+id);
+  const cb = el.querySelector('.cl-checkbox');
+  el.classList.toggle('done', state==='done');
+  el.classList.toggle('na', state==='na');
+  el.classList.toggle('skip', state==='na');
+  cb.textContent = state==='done' ? '✓' : state==='na' ? '—' : '';
+  updateClProgress();
+  updateClBadge();
+  // hide if filter mismatch
+  if(clFilter==='todo' && state!=='todo') el.style.display='none';
+  if(clFilter==='done' && state!=='done') el.style.display='none';
+}
+
+function updateClProgress(){
+  const db = CHECKLIST_DB[clWorkType];
+  if(!db) return;
+  const allItems = db.groups.flatMap(g=>g.items);
+  const total = allItems.length;
+  const done = allItems.filter(it => clState[it.id]==='done').length;
+  const na = allItems.filter(it => clState[it.id]==='na').length;
+  const effective = total - na;
+  const pct = effective > 0 ? Math.round(done/effective*100) : 0;
+  document.getElementById('cl-prog-label').textContent = `완료 ${done} / 전체 ${effective} (해당없음 ${na}건 제외)`;
+  document.getElementById('cl-prog-pct').textContent = pct+'%';
+  document.getElementById('cl-prog-fill').style.width = pct+'%';
+  document.getElementById('cl-prog-pct').style.color = pct===100?'var(--green)':pct>=70?'var(--cyan)':'var(--yellow)';
+  // re-render group headers
+  db.groups.forEach(g => {
+    const doneCount = g.items.filter(it=>clState[it.id]==='done').length;
+    const el = document.querySelector(`#clg-${g.name} .ghd-badge`);
+    if(el) el.textContent = `${doneCount}/${g.items.length}`;
+  });
+}
+
+function updateClBadge(){
+  const db = CHECKLIST_DB[clWorkType];
+  if(!db) return;
+  const allItems = db.groups.flatMap(g=>g.items);
+  const todo = allItems.filter(it=>clState[it.id]==='todo').length;
+  const badge = document.getElementById('pb-checklist');
+  badge.textContent = todo;
+  badge.classList.toggle('on', todo>0);
+}
+
+function filterChecklist(f){
+  clFilter = f;
+  ['all','todo','done','req'].forEach(id => {
+    document.getElementById('cf-'+id).classList.toggle('on', id===f);
+  });
+  const db = CHECKLIST_DB[clWorkType];
+  if(!db) return;
+  db.groups.forEach(g => g.items.forEach(it => {
+    const el = document.getElementById('cli-'+it.id);
+    if(!el) return;
+    const st = clState[it.id];
+    let show = true;
+    if(f==='todo' && st!=='todo') show=false;
+    if(f==='done' && st!=='done') show=false;
+    if(f==='req' && !it.req) show=false;
+    el.style.display = show ? '' : 'none';
+  }));
+}
+
+function resetChecklist(){
+  const db = CHECKLIST_DB[clWorkType];
+  if(!db) return;
+  db.groups.forEach(g => g.items.forEach(it => { clState[it.id]='todo'; }));
+  renderChecklistUI(db);
+  filterChecklist('all');
+}
+
+function submitChecklist(){
+  const db = CHECKLIST_DB[clWorkType];
+  if(!db){ alert('공종을 먼저 선택하세요.'); return; }
+  const allItems = db.groups.flatMap(g=>g.items);
+  const done = allItems.filter(it=>clState[it.id]==='done').length;
+  const todo = allItems.filter(it=>clState[it.id]==='todo'&&db.groups.flatMap(g=>g.items).find(i=>i.id===it.id)?.req).length;
+  const reqTodo = allItems.filter(it=>clState[it.id]==='todo' && CHECKLIST_DB[clWorkType].groups.flatMap(g=>g.items).find(i=>i.id===it.id)?.req);
+  if(reqTodo.length>0){
+    const names = reqTodo.slice(0,3).map(it=>it.title).join('\n• ');
+    if(!confirm(`필수 항목 ${reqTodo.length}건이 미완료 상태입니다:\n• ${names}\n\n그대로 제출하시겠습니까?`)) return;
+  }
+  const now = new Date().toLocaleString('ko-KR',{hour12:false});
+  alert(`✅ 검측 요청서가 제출되었습니다.\n\n공종: ${db.label}\n완료: ${done}/${allItems.length}건\n제출일시: ${now}\n\n(실제 시스템에서는 감리원에게 자동 전송됩니다)`);
+}
+
+// ══════════════════════════════════════════════════
+// 📢 민원 답변 AI 초안
+// ══════════════════════════════════════════════════
+let selectedComplaintType = 'noise';
+
+function selectComplaintType(el){
+  document.querySelectorAll('.ctype-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  selectedComplaintType = el.dataset.type;
+}
+
+const COMPLAINT_TEMPLATES = {
+  noise: { label:'소음·진동', emoji:'🔊',
+    context:'소음·진동 민원으로, 현장 방음벽 설치 여부, 작업 시간대, 소음 측정 결과를 포함하여 답변',
+    measures:['방음벽 추가 설치 또는 방음 덮개 강화','소음 발생 장비 작업 시간 조정 (주간 집중)','주기적 소음·진동 측정 및 결과 공개','저소음 장비 교체 검토']
+  },
+  dust: { label:'비산먼지', emoji:'💨',
+    context:'비산먼지 민원으로, 살수 차량 운영 현황, 방진망 설치, 세륜 시설 운영 현황을 포함',
+    measures:['공사 구간 살수 차량 운행 횟수 증가','방진망 및 방진 덮개 설치 보강','세륜기 점검 및 운영 강화','무풍 시간대 토공 작업 집중 계획']
+  },
+  crack: { label:'인접건물 균열', emoji:'🏚',
+    context:'인접건물 균열 피해 민원으로, 굴착 전 현황 조사 여부, 계측기 설치 현황, 원인 분석을 포함',
+    measures:['전문 기관 균열 조사 및 원인 분석 의뢰','계측기 추가 설치 및 모니터링 강화','공사 방법 변경 검토 (진동 저감 공법)','피해 인과관계 확인 후 보상 절차 안내']
+  },
+  road: { label:'도로 파손', emoji:'🚧',
+    context:'도로 파손 민원으로, 공사 차량 통행 현황, 임시 포장 계획, 보수 일정을 포함',
+    measures:['임시 보수 즉시 시행','공사 완료 후 원상 복구 포장 계획 수립','대형 차량 우회 경로 지정','노면 상태 주기적 점검 및 즉시 보수']
+  },
+  water: { label:'지하수·용출수', emoji:'💧',
+    context:'지하수 또는 용출수 관련 민원으로, 지하수 영향 분석, 배수 계획, 모니터링 현황을 포함',
+    measures:['지하수 모니터링 관측정 설치 및 운영','용출수 처리 방법 및 배수 계획 수립','인근 우물 수위 주기적 모니터링','전문가 수리지질 조사 의뢰 검토']
+  },
+  delay: { label:'공사 지연', emoji:'📅',
+    context:'공사 기간 지연에 대한 민원으로, 지연 원인, 현재 공정률, 준공 예정일을 포함',
+    measures:['공사 지연 원인 및 현황 투명하게 설명','단축 공정 계획 수립 및 공유','주민 대상 공사 진행 현황 정기 안내','준공 일정 확정 즉시 통보 약속']
+  },
+  night: { label:'야간 작업', emoji:'🌙',
+    context:'야간 공사 민원으로, 야간 작업 허가 여부, 불가피성, 소음 저감 대책을 포함',
+    measures:['야간 작업 최소화 및 불가피한 경우 사전 고지','야간 소음 기준 준수 및 측정 실시','방음 시설 보강 후 야간 작업 진행','야간 작업 완료 후 즉시 청소 및 정리']
+  },
+  other: { label:'기타', emoji:'📝',
+    context:'기타 공사 관련 민원으로, 민원 내용을 검토하고 성실하게 답변',
+    measures:['민원 내용 면밀히 검토 후 대응 방안 수립','담당자 직접 현장 확인 및 조치','주민과의 소통 강화를 위한 간담회 개최 검토','재발 방지를 위한 내부 교육 실시']
+  }
+};
+
+async function generateComplaint(){
+  const content = document.getElementById('complaintInput').value.trim();
+  const status = document.getElementById('complaintStatus').value;
+  const format = document.getElementById('complaintFormat').value;
+  const tmpl = COMPLAINT_TEMPLATES[selectedComplaintType];
+
+  const btn = document.getElementById('complaintGenBtn');
+  const spin = document.getElementById('complaintSpin');
+  const txt = document.getElementById('complaintBtnTxt');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  spin.style.display = 'block';
+  txt.style.display = 'none';
+
+  const outputEl = document.getElementById('complaintOutput');
+  outputEl.style.display = 'block';
+  outputEl.innerHTML = `
+    <div class="draft-area">
+      <div class="draft-header">
+        <div class="draft-header-title">${tmpl.emoji} ${tmpl.label} — AI 초안 생성 중...</div>
+      </div>
+      <div class="draft-body draft-streaming" id="draftBody">
+        <span style="color:var(--tx-d);">AI가 공문 초안을 작성하고 있습니다...</span>
+        <span class="draft-cursor"></span>
+      </div>
+    </div>`;
+
+  try {
+    if(isLive){
+      await generateComplaintLive(content, status, format, tmpl);
+    } else {
+      await generateComplaintDemo(content, status, format, tmpl);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    spin.style.display = 'none';
+    txt.style.display = 'inline';
+  }
+}
+
+async function generateComplaintDemo(content, status, format, tmpl){
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일`;
+  const refNo = `3공구-민원-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${Math.floor(Math.random()*90+10)}`;
+
+  const statusLabel = {
+    processing:'현재 적극적으로 개선 조치를 취하고 있습니다',
+    scheduled:'관계자 협의를 통해 조치 일정을 조율하고 있습니다',
+    resolved:'관련 조치를 완료하였습니다',
+    monitoring:'지속적인 모니터링을 통해 관리하고 있습니다',
+    impossible:'기술적·법적 제약으로 즉각적인 해결에 어려움이 있으나 최대한 저감 대책을 강구하겠습니다'
+  }[status];
+
+  const measuresTxt = tmpl.measures.map((m,i)=>`  ${i+1}. ${m}`).join('\n');
+
+  let draft = '';
+
+  if(format === 'formal'){
+    draft = `문서번호: ${refNo}
+수 신: 민원인 ${content.match(/민원인[:\s]*([^\s/\n]+)/)?.[1] || '귀하'}
+발 신: 고속국도 제30호 대산-당진간 건설공사 제3공구 현장
+제 목: ${tmpl.label} 관련 민원 회신
+날 짜: ${dateStr}
+
+안녕하십니까.
+
+저희 고속국도 대산-당진간 건설공사 제3공구 현장을 찾아주셔서 감사드리며, 귀하께서 제기하신 ${tmpl.label} 관련 민원에 대해 다음과 같이 회신 드립니다.
+
+【민원 내용 요약】
+${content || '귀하의 소중한 의견을 검토하였습니다.'}
+
+【현황 및 조치 사항】
+현재 본 공사는 고속국도 제30호선 건설을 위하여 공정에 따른 작업을 진행 중이며, ${statusLabel}.
+
+귀하께서 제기하신 사항과 관련하여 아래와 같은 조치를 취하고 있습니다:
+
+${measuresTxt}
+
+【향후 계획】
+본 현장은 관계 법령 및 환경 기준을 철저히 준수하며, 인근 주민 여러분의 불편을 최소화하기 위해 최선의 노력을 다하겠습니다. 추가적인 문의 사항이 있으시면 아래 담당자에게 연락 주시기 바랍니다.
+
+담당자: 현장 환경·민원 담당 (현장대리인 전 성 권)
+연락처: 현장 사무소 (당진시 소재)
+
+귀하의 협조에 깊이 감사드립니다.
+
+고속국도 제30호 대산-당진간 건설공사 제3공구 현장 드림`;
+
+  } else if(format === 'simple'){
+    draft = `[${tmpl.label} 민원 처리 결과 통보]
+
+민원인 귀하,
+
+접수하신 ${tmpl.label} 관련 민원에 대하여 검토 결과를 안내 드립니다.
+
+○ 민원 내용: ${content || '해당 민원 내용'}
+○ 처리 현황: ${statusLabel}
+○ 주요 조치:
+${tmpl.measures.slice(0,3).map((m,i)=>`  ${i+1}. ${m}`).join('\n')}
+
+추가 문의: 3공구 현장 사무소
+처리일자: ${dateStr}`;
+
+  } else { // phone
+    draft = `[${tmpl.label} 민원 전화 응대 멘트]
+
+안녕하세요, 대산-당진 고속도로 3공구 현장입니다.
+말씀하신 ${tmpl.label} 관련 불편을 드려 정말 죄송합니다.
+
+현재 저희는 ${statusLabel}.
+구체적으로 다음과 같이 조치하고 있습니다:
+${tmpl.measures.slice(0,2).map((m,i)=>`• ${m}`).join('\n')}
+
+최대한 불편이 없도록 노력하겠습니다.
+추가로 궁금하신 사항이 있으시면 언제든지 연락 주십시오.
+감사합니다.`;
+  }
+
+  // Simulate streaming
+  const bodyEl = document.getElementById('draftBody');
+  bodyEl.innerHTML = '';
+  const cursor = document.createElement('span');
+  cursor.className = 'draft-cursor';
+  const lines = draft.split('\n');
+  for(let i=0; i<lines.length; i++){
+    await delay(30 + Math.random()*20);
+    const span = document.createElement('span');
+    span.textContent = lines[i] + '\n';
+    bodyEl.appendChild(span);
+  }
+
+  // Replace with final version + copy button
+  const outputEl = document.getElementById('complaintOutput');
+  outputEl.innerHTML = `
+    <div class="draft-area">
+      <div class="draft-header">
+        <div class="draft-header-title">${tmpl.emoji} ${tmpl.label} ${format==='formal'?'공문':format==='simple'?'간이 통보문':'전화 응대 멘트'} 초안</div>
+        <button class="draft-copy-btn" id="copyDraftBtn" onclick="copyDraft()">📋 복사</button>
+      </div>
+      <div class="draft-body" id="finalDraftBody">${escHtml(draft)}</div>
+      <div class="draft-meta">
+        <span class="dmeta-tag">${isLive?'LIVE AI':'DEMO 시뮬레이션'}</span>
+        <span class="dmeta-tag">${tmpl.label}</span>
+        <span class="dmeta-tag">${format==='formal'?'공문':format==='simple'?'간이통보':format}</span>
+        <span class="dmeta-tag">${dateStr}</span>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:var(--tx-d);line-height:1.6;">
+      ⚠ AI 생성 초안입니다. 실제 발송 전 담당자 검토·수정이 필요합니다.
+    </div>
+  `;
+  // Store for copy
+  window._currentDraft = draft;
+}
+
+async function generateComplaintLive(content, status, format, tmpl){
+  const apiKey = document.getElementById('panelApiKey').value.trim();
+  const formatLabel = {formal:'공식 공문',simple:'간이 통보문',phone:'전화 응대 멘트'}[format];
+  const statusLabel = {
+    processing:'조치 중',scheduled:'일정 조율 중',resolved:'조치 완료',
+    monitoring:'모니터링 중',impossible:'기술적 불가'
+  }[status];
+
+  const prompt = `당신은 건설공사 현장의 민원 담당 실무자입니다.
+아래 정보를 바탕으로 민원 답변 ${formatLabel}을 작성해주세요.
+
+공사명: 고속국도 제30호 대산-당진간 건설공사 제3공구
+민원 유형: ${tmpl.label}
+민원 내용: ${content || '(내용 없음)'}
+현장 대응 상태: ${statusLabel}
+제안 조치사항: ${tmpl.measures.join(' / ')}
+
+요구사항:
+- ${formatLabel} 형식으로 작성
+- 공손하고 전문적인 어조
+- 구체적인 조치 사항 포함
+- 한국어로 작성
+- 마크다운 없이 순수 텍스트만`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+  });
+  if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||`HTTP ${res.status}`); }
+  const data = await res.json();
+  const draft = data.content?.map(b=>b.text||'').join('') || '';
+
+  const outputEl = document.getElementById('complaintOutput');
+  outputEl.innerHTML = `
+    <div class="draft-area">
+      <div class="draft-header">
+        <div class="draft-header-title">${tmpl.emoji} ${tmpl.label} — LIVE AI 초안</div>
+        <button class="draft-copy-btn" id="copyDraftBtn" onclick="copyDraft()">📋 복사</button>
+      </div>
+      <div class="draft-body" id="finalDraftBody">${escHtml(draft)}</div>
+      <div class="draft-meta">
+        <span class="dmeta-tag">LIVE AI</span>
+        <span class="dmeta-tag">${tmpl.label}</span>
+        <span class="dmeta-tag">${formatLabel}</span>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:var(--tx-d);">⚠ AI 생성 초안입니다. 실제 발송 전 담당자 검토·수정이 필요합니다.</div>
+  `;
+  window._currentDraft = draft;
+}
+
+function copyDraft(){
+  const text = window._currentDraft || document.getElementById('finalDraftBody')?.textContent || '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyDraftBtn');
+    if(btn){ btn.textContent='✅ 복사됨'; btn.classList.add('copied'); }
+    setTimeout(()=>{ if(btn){ btn.textContent='📋 복사'; btn.classList.remove('copied'); } },2000);
+  }).catch(()=>{ alert('클립보드 복사에 실패했습니다. 텍스트를 직접 선택하여 복사해주세요.'); });
+}
+
+// ══════════════════════════════════════════════════
+// ⇥ 패널 크기 확장
+// ══════════════════════════════════════════════════
+let expandState = 0; // 0=기본, 1=와이드, 2=풀
+const EXPAND_STATES = [
+  { cls:'', mainCls:'panel-open', icon:'⇥', label:'확장' },
+  { cls:'wide', mainCls:'panel-open panel-wide', icon:'⇤⇥', label:'더 넓게' },
+  { cls:'fullscreen', mainCls:'panel-open panel-fullscreen', icon:'⇤', label:'축소' },
+];
+
+function cycleExpand(){
+  if(!panelOpen) return;
+  expandState = (expandState + 1) % 3;
+  const s = EXPAND_STATES[expandState];
+  const panel = document.getElementById('aiPanel');
+  const main  = document.getElementById('mainContent');
+  // remove all expand classes
+  panel.classList.remove('wide','fullscreen');
+  main.classList.remove('panel-wide','panel-fullscreen');
+  // apply new
+  if(s.cls) panel.classList.add(s.cls);
+  s.mainCls.split(' ').filter(Boolean).forEach(c => main.classList.add(c));
+  document.getElementById('expandIcon').textContent = s.icon;
+  const btn = document.getElementById('expandBtn');
+  btn.classList.toggle('active', expandState > 0);
+  btn.title = s.label;
+}
+
+// Override togglePanel to reset expand on close
+const _origTogglePanel = togglePanel;
+function togglePanel(){
+  panelOpen = !panelOpen;
+  document.getElementById('aiPanel').classList.toggle('open', panelOpen);
+  const main = document.getElementById('mainContent');
+  main.classList.toggle('panel-open', panelOpen);
+  if(!panelOpen){
+    // reset expand
+    expandState = 0;
+    document.getElementById('aiPanel').classList.remove('wide','fullscreen');
+    main.classList.remove('panel-wide','panel-fullscreen');
+    document.getElementById('expandIcon').textContent = '⇥';
+    document.getElementById('expandBtn').classList.remove('active');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 📂 민원대장 불러오기 — BCMF 민원 및 보상 탭 데이터
+// ══════════════════════════════════════════════════
+// 실제 BCMF 연동 시 API 호출로 대체. 현재는 샘플 데이터
+const COMPLAINT_REGISTER = [
+  { id:'C-2025-031', date:'2025.03.18', name:'김○○', addr:'당진시 송악읍', type:'noise',     status:'미처리', content:'공사 장비 소음으로 새벽 수면 방해. 특히 파일 항타 소음 심각. 작업 시간 조정 요청.' },
+  { id:'C-2025-029', date:'2025.03.15', name:'이○○', addr:'당진시 합덕읍', type:'dust',      status:'처리중', content:'공사 차량 통행 시 먼지 발생으로 인근 농작물 피해 우려. 살수 차량 증차 요청.' },
+  { id:'C-2025-027', date:'2025.03.12', name:'박○○', addr:'당진시 신평면', type:'crack',     status:'미처리', content:'인근 주택 외벽에 균열 발생. 공사 발파 진동과 연관성 의심. 전문가 조사 요청.' },
+  { id:'C-2025-024', date:'2025.03.08', name:'최○○', addr:'당진시 면천면', type:'road',      status:'미처리', content:'공사 차량 과적으로 마을 진입로 노면 파손. 즉각적인 보수 요청.' },
+  { id:'C-2025-021', date:'2025.03.05', name:'정○○', addr:'당진시 우강면', type:'water',     status:'미처리', content:'공사 구간 근처 논에 탁수 유입 발생. 농업용수 오염 피해 민원.' },
+  { id:'C-2025-018', date:'2025.02.28', name:'강○○', addr:'당진시 석문면', type:'night',     status:'처리중', content:'야간 10시 이후 중장비 작업 소음. 주민 다수 수면 피해 집단 민원.' },
+];
+let selectedComplaintRecord = null;
+
+function renderComplaintImportList(){
+  const list = document.getElementById('complaintImportList');
+  const pending = COMPLAINT_REGISTER.filter(c => c.status === '미처리');
+  const all = COMPLAINT_REGISTER;
+  list.innerHTML = all.map(c => {
+    const tmpl = COMPLAINT_TEMPLATES[c.type] || COMPLAINT_TEMPLATES.other;
+    const isSel = selectedComplaintRecord?.id === c.id;
+    return `
+      <div onclick="selectComplaintRecord('${c.id}')" style="
+        padding:9px 12px; border-bottom:1px solid var(--bdr); cursor:pointer;
+        background:${isSel ? 'var(--primary-d)' : 'transparent'};
+        border-left:${isSel ? '2px solid var(--primary-l)' : '2px solid transparent'};
+        transition:all .15s;
+      " onmouseover="this.style.background='var(--surf)'" onmouseout="this.style.background='${isSel?'var(--primary-d)':'transparent'}'">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+          <span style="font-size:10px;font-family:var(--mono);color:var(--tx-d);">${c.id}</span>
+          <span style="font-size:10px;font-family:var(--mono);color:var(--tx-d);">${c.date}</span>
+          <span style="margin-left:auto;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;
+            background:${c.status==='미처리'?'rgba(224,80,80,.15)':'rgba(240,192,64,.15)'};
+            color:${c.status==='미처리'?'var(--red)':'var(--yellow)'};">${c.status}</span>
+        </div>
+        <div style="font-size:11px;color:var(--tx);font-weight:600;margin-bottom:2px;">${tmpl.emoji} ${tmpl.label} — ${c.name} (${c.addr})</div>
+        <div style="font-size:10px;color:var(--tx-m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.content}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectComplaintRecord(id){
+  selectedComplaintRecord = COMPLAINT_REGISTER.find(c => c.id === id);
+  if(!selectedComplaintRecord) return;
+  // Set complaint type chip
+  document.querySelectorAll('.ctype-chip').forEach(c => {
+    c.classList.toggle('on', c.dataset.type === selectedComplaintRecord.type);
+  });
+  selectedComplaintType = selectedComplaintRecord.type;
+  // Show preview
+  document.getElementById('selectedComplaintPreview').style.display = 'block';
+  document.getElementById('selectedComplaintText').innerHTML = `
+    <b style="color:var(--tx)">${selectedComplaintRecord.id}</b> · ${selectedComplaintRecord.date} · ${selectedComplaintRecord.name}<br>
+    ${selectedComplaintRecord.content}
+  `;
+  renderComplaintImportList();
+}
+
+function switchComplaintMode(mode){
+  const isDirect = mode === 'direct';
+  document.getElementById('cmode-direct').classList.toggle('on', isDirect);
+  document.getElementById('cmode-import').classList.toggle('on', !isDirect);
+  document.getElementById('complaint-direct-area').style.display = isDirect ? 'block' : 'none';
+  document.getElementById('complaint-import-area').style.display = isDirect ? 'none' : 'block';
+  if(!isDirect) renderComplaintImportList();
+}
+
+// Override generateComplaint to use imported record if in import mode
+const _origGenerateComplaint = generateComplaint;
+async function generateComplaint(){
+  // If import mode, merge selected record into complaintInput
+  if(document.getElementById('cmode-import').classList.contains('on') && selectedComplaintRecord){
+    document.getElementById('complaintInput').value = selectedComplaintRecord.content + '\n민원인: ' + selectedComplaintRecord.name + ' / ' + selectedComplaintRecord.addr + ' / 접수번호: ' + selectedComplaintRecord.id;
+    selectedComplaintType = selectedComplaintRecord.type;
+  }
+  const content = document.getElementById('complaintInput').value.trim();
+  const status = document.getElementById('complaintStatus').value;
+  const format = document.getElementById('complaintFormat').value;
+  const tmpl = COMPLAINT_TEMPLATES[selectedComplaintType];
+
+  const btn = document.getElementById('complaintGenBtn');
+  const spin = document.getElementById('complaintSpin');
+  const txt = document.getElementById('complaintBtnTxt');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  spin.style.display = 'block';
+  txt.style.display = 'none';
+
+  const outputEl = document.getElementById('complaintOutput');
+  outputEl.style.display = 'block';
+  outputEl.innerHTML = `
+    <div class="draft-area">
+      <div class="draft-header">
+        <div class="draft-header-title">${tmpl.emoji} ${tmpl.label} — AI 초안 생성 중...</div>
+      </div>
+      <div class="draft-body draft-streaming" id="draftBody">
+        <span style="color:var(--tx-d);">AI가 공문 초안을 작성하고 있습니다...</span>
+        <span class="draft-cursor"></span>
+      </div>
+    </div>`;
+
+  try {
+    if(isLive){ await generateComplaintLive(content, status, format, tmpl); }
+    else { await generateComplaintDemo(content, status, format, tmpl); }
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    spin.style.display = 'none';
+    txt.style.display = 'inline';
+  }
+}
+
+// ══════════════════════════════════════════════════
+// 🚨 사고 대응
+// ══════════════════════════════════════════════════
+const SITE_LAT = 36.89, SITE_LON = 126.63; // 당진 현장 기준
+let accidentType = 'fall';
+let accidentCoords = { lat: SITE_LAT, lon: SITE_LON };
+
+// 당진·서산 인근 실제 의료기관 데이터 (Nominatim 보조)
+const NEARBY_HOSPITALS = [
+  { name:'순천향대학교 부속 천안병원 (응급센터)', dist:'약 38km', tel:'041-570-2114', type:'종합병원', specialty:'응급의학과, 외상외과', lat:36.8018, lon:127.1495 },
+  { name:'당진종합병원', dist:'약 12km', tel:'041-355-5000', type:'종합병원', specialty:'외과, 응급실 운영', lat:36.8936, lon:126.6452 },
+  { name:'서산중앙병원', dist:'약 18km', tel:'041-669-0000', type:'종합병원', specialty:'외과, 응급의학과', lat:36.7845, lon:126.4508 },
+  { name:'당진시 보건소', dist:'약 10km', tel:'041-350-4000', type:'보건기관', specialty:'응급처치, 의뢰', lat:36.8904, lon:126.6290 },
+  { name:'홍성의료원 (권역응급센터)', dist:'약 42km', tel:'041-630-6600', type:'권역응급센터', specialty:'중증외상, 응급의학', lat:36.6002, lon:126.6599 },
+];
+
+const ACCIDENT_GUIDE = {
+  fall:     { title:'추락사고 초기 대응', steps:['즉시 119 신고','피해자 이동 금지 (척추 손상 의심)','의식·호흡 확인 후 CPR 준비','현장 통제 및 2차 사고 방지','작업 전면 중지 및 관리자 보고'] },
+  crush:    { title:'협착·압착 대응',    steps:['119 신고 및 장비 즉시 정지','무리한 장비 조작 금지','지혈 처치 (출혈 부위 압박)','부상 부위 고정 후 대기','현장 보존 및 목격자 확보'] },
+  electric: { title:'감전 대응',         steps:['전원 즉시 차단 (직접 접촉 금지)','119 신고','절연 도구로 피해자 분리','의식 확인 및 심폐소생술 준비','번개·감전 화상 처치'] },
+  collapse: { title:'붕괴·매몰 대응',    steps:['119·소방서 즉시 신고','추가 붕괴 위험 확인 후 접근','매몰자 위치 파악 및 소통 유지','중장비 진입 통제','토사 추가 붕괴 방지 조치'] },
+  fire:     { title:'화재·폭발 대응',    steps:['대피 우선 (바람 반대 방향)','119 신고 및 소화기 초기 진화 시도','화약류·가스 주변 접근 금지','전원 및 가스 차단','이웃 현장 대피 안내'] },
+  other:    { title:'기타 사고 대응',     steps:['119 신고','피해자 안전한 장소로 이동','응급처치 실시','작업 중지 및 현장 보존','관리자·감리원 즉시 보고'] },
+};
+
+function selectAccidentType(el){
+  document.querySelectorAll('#accidentTypeGrid .ctype-chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  accidentType = el.dataset.type;
+}
+
+function callEmergency(num){
+  if(confirm(`${num}에 전화를 연결합니다.\n\n현재 위치: 충남 당진시 (대산-당진 고속도로 공사 현장)\n\n확인을 누르면 전화 앱이 열립니다.`)){
+    window.location.href = 'tel:'+num;
+  }
+}
+
+function useCurrentLocation(){
+  if(!navigator.geolocation){ alert('위치 정보를 사용할 수 없습니다.'); return; }
+  const inp = document.getElementById('accidentLocation');
+  inp.value = '위치 확인 중...';
+  navigator.geolocation.getCurrentPosition(pos => {
+    accidentCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    inp.value = `GPS: ${accidentCoords.lat.toFixed(5)}, ${accidentCoords.lon.toFixed(5)}`;
+  }, () => {
+    accidentCoords = { lat: SITE_LAT, lon: SITE_LON };
+    inp.value = `현장 기준 위치 (당진 공사현장)`;
+  });
+}
+
+async function findNearbyHospitals(){
+  const locInput = document.getElementById('accidentLocation').value.trim();
+  document.getElementById('accidentMapWrap').style.display = 'block';
+
+  // Show map via OpenStreetMap embed (no API key needed)
+  const lat = accidentCoords.lat, lon = accidentCoords.lon;
+  const zoom = 11;
+  const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.3},${lat-0.2},${lon+0.3},${lat+0.2}&layer=mapnik&marker=${lat},${lon}`;
+  const frame = document.getElementById('accidentMapFrame');
+  frame.src = mapUrl;
+  document.getElementById('mapCoordBadge').textContent = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+  frame.onload = () => { document.getElementById('mapLoadingOverlay').style.display = 'none'; };
+
+  // Render hospital list
+  const guide = ACCIDENT_GUIDE[accidentType] || ACCIDENT_GUIDE.other;
+  const list = document.getElementById('hospitalList');
+  list.innerHTML = `
+    <!-- 초기 대응 가이드 -->
+    <div class="rc danger" style="margin-bottom:8px;">
+      <div class="rc-head"><span class="sev-tag h">🚨 즉시</span><div class="rc-title">${guide.title}</div></div>
+      <ul style="margin-top:6px;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:4px;">
+        ${guide.steps.map((s,i)=>`<li style="font-size:11px;color:var(--tx-m);display:flex;gap:7px;"><span style="color:var(--accent);font-weight:700;min-width:14px;">${i+1}.</span>${s}</li>`).join('')}
+      </ul>
+    </div>
+
+    <!-- 인근 의료기관 -->
+    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--tx-d);margin-bottom:7px;display:flex;align-items:center;gap:7px;">
+      인근 의료기관 <span style="flex:1;height:1px;background:var(--bdr);display:block;"></span>
+    </div>
+    ${NEARBY_HOSPITALS.map(h => `
+      <div class="rc info" style="margin-bottom:7px;">
+        <div class="rc-head">
+          <span class="sev-tag l">🏥</span>
+          <div>
+            <div class="rc-title">${h.name}</div>
+            <div class="rc-body" style="margin-top:3px;">${h.specialty} · ${h.dist}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:7px;">
+          <a href="tel:${h.tel}" style="flex:1;padding:7px;background:var(--primary-d);border:1px solid var(--primary);border-radius:5px;color:var(--primary-l);font-size:11px;font-weight:700;text-align:center;text-decoration:none;transition:all .15s;">📞 ${h.tel}</a>
+          <a href="https://www.openstreetmap.org/directions?from=${lat},${lon}&to=${h.lat},${h.lon}&route=driving" target="_blank" style="padding:7px 10px;background:var(--surf);border:1px solid var(--bdr);border-radius:5px;color:var(--tx-m);font-size:11px;text-decoration:none;">🗺 길찾기</a>
+        </div>
+      </div>
+    `).join('')}
+
+    <!-- 사고 보고서 초안 버튼 -->
+    <button onclick="generateAccidentReport('${locInput || '현장 기준'}')" style="width:100%;padding:9px;background:var(--accent-d);border:1px solid var(--bdr-acc);border-radius:6px;color:var(--accent-l);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--ui);margin-top:4px;">
+      📋 사고 초기 보고서 초안 생성
+    </button>
+  `;
+
+  // Scroll to show map
+  document.getElementById('accidentMapWrap').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function generateAccidentReport(location){
+  const guide = ACCIDENT_GUIDE[accidentType] || ACCIDENT_GUIDE.other;
+  const now = new Date();
+  const dtStr = now.toLocaleString('ko-KR',{hour12:false});
+  const typeLabel = document.querySelector('#accidentTypeGrid .ctype-chip.on')?.textContent || '기타';
+
+  const report = `[사고 발생 초기 보고서]
+
+보고 일시: ${dtStr}
+공사명: 고속국도 제30호 대산-당진간 건설공사 제3공구
+사고 유형: ${typeLabel}
+사고 발생 위치: ${location}
+
+【초기 상황】
+사고 유형 "${typeLabel}" 발생 확인. 즉시 작업 중지 조치 완료.
+119 신고 실시 / 현장 관리자 및 감리원 보고 완료
+
+【즉시 조치 사항】
+${guide.steps.map((s,i)=>`${i+1}. ${s}`).join('\n')}
+
+【인근 의료기관 이송 계획】
+1순위: 당진종합병원 (☎ 041-355-5000, 약 12km)
+2순위: 순천향대 부속 천안병원 응급센터 (☎ 041-570-2114, 약 38km)
+
+【향후 조치】
+- 사고 경위 조사 및 재발 방지 대책 수립
+- 고용노동부 산업재해 신고 (중대재해 해당 시 즉시)
+- 전체 작업 중지 후 안전점검 실시
+
+보고자: 현장대리인 전 성 권`;
+
+  document.getElementById('accidentReportArea').style.display = 'block';
+  document.getElementById('accidentReportBody').textContent = report;
+  window._accidentReport = report;
+  document.getElementById('accidentReportArea').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function copyAccidentReport(){
+  const text = window._accidentReport || document.getElementById('accidentReportBody')?.textContent || '';
+  navigator.clipboard.writeText(text).then(() => {
+    alert('✅ 사고 보고서가 클립보드에 복사되었습니다.');
+  });
+}
+
+// ══════════════════════════════════════════════════
+// 📊 예측 분석
+// ══════════════════════════════════════════════════
+function renderWeekWeather(){
+  if(!weatherData) return;
+  const d = weatherData.daily;
+  const preview = document.getElementById('weekWeatherPreview');
+  if(!preview) return;
+  const days = ['일','월','화','수','목','금','토'];
+  preview.innerHTML = '';
+  const today = new Date();
+  for(let i=0;i<Math.min(7,d.weathercode.length);i++){
+    const dt = new Date(today); dt.setDate(today.getDate()+i);
+    const code = d.weathercode[i];
+    const issues = isWorkDangerous(d, i);
+    const canWork = issues.length === 0;
+    const cell = document.createElement('div');
+    cell.style.cssText = `flex:1;text-align:center;padding:4px 2px;background:${canWork?'rgba(62,189,122,.1)':'rgba(224,80,80,.1)'};border:1px solid ${canWork?'rgba(62,189,122,.25)':'rgba(224,80,80,.25)'};border-radius:4px;`;
+    cell.innerHTML = `<div style="font-size:9px;color:var(--tx-d);">${days[dt.getDay()]}</div><div style="font-size:14px;">${getWxIcon(code)}</div><div style="font-size:9px;font-weight:700;color:${canWork?'var(--green)':'var(--red)'};">${canWork?'가능':'불가'}</div>`;
+    preview.appendChild(cell);
+  }
+  const workable = Array.from({length:Math.min(7,d.weathercode.length)},(_,i)=>isWorkDangerous(d,i).length===0).filter(Boolean).length;
+  const body = document.getElementById('weatherPredictBody');
+  if(body) body.textContent = `향후 7일 중 콘크리트 타설 가능 예상일: ${workable}일. 강우·강풍·저온 등 제한 조건 포함 분석.`;
+}
+
+function expandPredict(type){
+  const msgs = {
+    delay:'천의1터널 공정 지연 예측을 자세히 분석해줘. 현재 공정률 1.43%, 인허가 미승인 상태, 당해년도 목표 기준으로 어떤 위험이 있는지 설명해줘.',
+    weather:'이번 주 날씨 예보를 기반으로 콘크리트 타설 가능 일정을 상세히 분석해줘.',
+    safety:'터널 구간 용출수 발생과 지반등급 IVB 조합의 안전 위험도를 분석하고 보강 방안을 제안해줘.',
+    material:'교량 상부공 콘크리트 타설 준비를 위한 레미콘 발주 계획을 구체적으로 제안해줘.',
+    land:'토지보상 미완료 421,914㎡가 전체 공정에 미치는 영향을 분석하고 대응 방안을 제안해줘.',
+  };
+  if(msgs[type]){
+    alert(`💡 LIVE 모드에서 AI에게 질문합니다:\n\n"${msgs[type]}"\n\n(현재 DEMO 모드 — API Key 입력 시 실제 AI 분석이 실행됩니다)`);
+  }
+}
+
+function refreshPredictions(){
+  const cards = document.getElementById('predictCards');
+  if(!cards) return;
+  cards.style.opacity = '0.5';
+  setTimeout(()=>{
+    renderWeekWeather();
+    cards.style.opacity = '1';
+  }, 800);
+}
+</script>
+</body>
+</html>
